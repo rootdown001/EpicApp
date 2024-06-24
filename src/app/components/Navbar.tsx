@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import navLogo from "/public/assets/lance8.png";
+import navLogo from "/public/assets/BAYBERRY1.png";
 import Link from "next/link";
 import { AiOutlineClose, AiOutlineMail, AiOutlineMenu } from "react-icons/ai";
 import { FaDev, FaGithub, FaLinkedinIn, FaXTwitter } from "react-icons/fa6";
@@ -25,10 +25,11 @@ export default function Navbar() {
   useEffect(() => {
     // console.log("pathname: ", pathname);
     if (
-      pathname === "/calendar" ||
-      pathname === "/blog" ||
-      pathname === "/portfolio" ||
-      pathname === "/job"
+      false
+      // pathname === "/calendar" ||
+      // pathname === "/blog" ||
+      // pathname === "/portfolio" ||
+      // pathname === "/job"
     ) {
       setNavBg("transparent");
       setLinkColor("#ecf0f3");
@@ -38,7 +39,7 @@ export default function Navbar() {
       setLinkColor("#1f2937");
       setInProject(false);
     }
-    console.log("project: ", inProject);
+    // console.log("project: ", inProject);
   }, [pathname, inProject]);
 
   // empty dependency array so runs just on load (for navbar shadow)
@@ -66,7 +67,7 @@ export default function Navbar() {
     >
       <div className="flex justify-between items-center w-full h-full px-2 2xl:px-16">
         <Link href="/">
-          <Image src={navLogo} alt="/" width={200} />
+          <Image src={navLogo} alt="/" width={140} />
         </Link>
 
         <div>
@@ -74,7 +75,7 @@ export default function Navbar() {
             <li className="ml-10 text-sm uppercase hover:border-b">
               <Link href="/#home">Home</Link>
             </li>
-            <li className="ml-10 text-sm uppercase hover:border-b">
+            {/* <li className="ml-10 text-sm uppercase hover:border-b">
               <Link href="/#about">About</Link>
             </li>
 
@@ -84,7 +85,7 @@ export default function Navbar() {
 
             <li className="ml-10 text-sm uppercase hover:border-b animate-bounce1">
               <Link href="/#projects">Projects</Link>
-            </li>
+            </li> */}
             <li className="ml-10 text-sm uppercase hover:border-b">
               <Link href="/#contact">Contact</Link>
             </li>
@@ -133,7 +134,7 @@ export default function Navbar() {
                     Home
                   </li>
                 </Link>
-                <Link href="/#about">
+                {/* <Link href="/#about">
                   <li onClick={() => setNav(false)} className=" py-4 text-sm">
                     About
                   </li>
@@ -147,7 +148,7 @@ export default function Navbar() {
                   <li onClick={() => setNav(false)} className=" py-4 text-sm">
                     Projects
                   </li>
-                </Link>
+                </Link> */}
                 <Link href="/#contact">
                   <li onClick={() => setNav(false)} className=" py-4 text-sm">
                     Contact
