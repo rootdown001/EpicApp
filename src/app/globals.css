@@ -32,13 +32,14 @@ html {
     @apply cursor-pointer;
   }
 
-  button {
+  /* button {
     @apply shadow-lg shadow-gray-400 rounded-md uppercase bg-gradient-to-r from-theme-color to-theme-color/80 text-white;
 
     &[disabled] {
       @apply bg-gradient-to-r from-gray-500 to-gray-600 opacity-50 cursor-not-allowed;
     }
-  }
+
+  } */
 }
 
 @keyframes bounce {
@@ -63,4 +64,21 @@ html {
 
 .animate-bounce1 {
   animation: bounce 5s ease infinite;
+}
+.bg-grad {
+  background-image: linear-gradient(
+    to right top,
+    #212a31,
+    #232d34,
+    #262f38,
+    #28323b,
+    #2b353f,
+    #2c3844,
+    #2c3b48,
+    #2c3e4d,
+    #294253,
+    #24465a,
+    #1d4a60,
+    #124e66
+  );
 }

@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import navLogo from "/public/assets/BAYBERRY1.png";
+import navLogo from "/public/assets/EpicCare.png";
 import Link from "next/link";
 import { AiOutlineClose, AiOutlineMail, AiOutlineMenu } from "react-icons/ai";
 import { FaDev, FaGithub, FaLinkedinIn, FaXTwitter } from "react-icons/fa6";
@@ -10,64 +10,84 @@ import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 
 export default function Navbar() {
+  const [isScrolled, setIsScrolled] = useState(false);
   const [nav, setNav] = useState(false);
-  const [shadow, setShadow] = useState(false);
-  const [navBg, setNavBg] = useState("#ecf0f3");
+  // const [shadow, setShadow] = useState(false);
+  const [navBg, setNavBg] = useState("#D3D9D4");
   const [linkColor, setLinkColor] = useState("#1f2937");
-  const [inProject, setInProject] = useState(false);
-  const router = useRouter();
-  const pathname = usePathname();
+  // const [inProject, setInProject] = useState(false);
+  // const router = useRouter();
+  // const pathname = usePathname();
 
   const handleNav = () => {
     setNav(!nav);
   };
 
-  useEffect(() => {
-    // console.log("pathname: ", pathname);
-    if (
-      false
-      // pathname === "/calendar" ||
-      // pathname === "/blog" ||
-      // pathname === "/portfolio" ||
-      // pathname === "/job"
-    ) {
-      setNavBg("transparent");
-      setLinkColor("#ecf0f3");
-      setInProject(true);
-    } else {
-      setNavBg("#ecf0f3");
-      setLinkColor("#1f2937");
-      setInProject(false);
-    }
-    // console.log("project: ", inProject);
-  }, [pathname, inProject]);
+  // useEffect(() => {
+  //   const handleScroll = () => {
+  //     const show = window.scrollY > 0;
+  //     if (show) {
+  //       setIsScrolled(true);
+  //     } else {
+  //       setIsScrolled(false);
+  //     }
+  //   };
+
+  //   document.addEventListener("scroll", handleScroll);
+
+  //   return () => {
+  //     // Clean up the listener
+  //     document.removeEventListener("scroll", handleScroll);
+  //   };
+  // }, []);
+
+  // useEffect(() => {
+  //   // console.log("pathname: ", pathname);
+  //   if (
+  //     false
+  //     // pathname === "/calendar" ||
+  //     // pathname === "/blog" ||
+  //     // pathname === "/portfolio" ||
+  //     // pathname === "/job"
+  //   ) {
+  //     setNavBg("transparent");
+  //     setLinkColor("#ecf0f3");
+  //     setInProject(true);
+  //   } else {
+  //     setNavBg("#ecf0f3");
+  //     setLinkColor("#1f2937");
+  //     setInProject(false);
+  //   }
+  //   // console.log("project: ", inProject);
+  // }, [pathname, inProject]);
 
   // empty dependency array so runs just on load (for navbar shadow)
-  useEffect(() => {
-    const handleShadow = () => {
-      if (window.scrollY >= 90) {
-        setShadow(true);
-        console.log("shadow");
-      } else {
-        setShadow(false);
-        console.log("no shadow");
-      }
-    };
-    window.addEventListener("scroll", handleShadow);
-  }, []);
+  // useEffect(() => {
+  //   const handleShadow = () => {
+  //     if (window.scrollY >= 90) {
+  //       setShadow(true);
+  //       console.log("shadow");
+  //     } else {
+  //       setShadow(false);
+  //       console.log("no shadow");
+  //     }
+  //   };
+  //   window.addEventListener("scroll", handleShadow);
+  // }, []);
 
   return (
     <div
       style={{ background: `${navBg}` }}
-      className={
-        !inProject && shadow
-          ? "fixed w-full  h-20 shadow-xl z-[100]"
-          : "fixed w-full  h-20 z-[100]"
-      }
+      className={"fixed w-full  h-20 opacity-100"}
+      // className={
+      //   !isScrolled
+      //     ? "fixed w-full  h-20 shadow-xl opacity-0"
+      //     : "fixed w-full  h-20 opacity-100"
+      // }
     >
       <div className="flex justify-between items-center w-full h-full px-2 2xl:px-16">
         <Link href="/">
-          <Image src={navLogo} alt="/" width={140} />
+          <Image src={navLogo} alt="/" width={180} />
         </Link>
 
         <div>
@@ -161,7 +181,7 @@ export default function Navbar() {
                   Let's connect.
                 </p>
                 <div className="flex items-center justify-between my-4 w-full sm:w-[80%]">
-                  <div className="rounded-full shadow-lg shadow-gray-400 p-3 cursor-pointer hover:scale-105 ease-in duration-300">
+                  <div className=" bg=[#d3d9d4] rounded-full shadow-lg shadow-gray-400 p-3 cursor-pointer hover:scale-105 ease-in duration-300">
                     <Link
                       href="https://www.linkedin.com/in/nwpgpc/"
                       target="_blank"
