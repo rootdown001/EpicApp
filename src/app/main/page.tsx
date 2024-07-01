@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { AiOutlineMail } from "react-icons/ai";
 import { BsFillPersonLinesFill } from "react-icons/bs";
 import { FaDev, FaGithub, FaLinkedinIn, FaXTwitter } from "react-icons/fa6";
+// import * as dotenv from "dotenv";
 
 export default function Main() {
   const colors = {
@@ -15,11 +16,35 @@ export default function Main() {
   };
 
   const [runFetch, setRunFetch] = useState(false);
+  const [runAuth, setRunAuth] = useState(false);
   const [data, setData] = useState();
   const [isError, setIsError] = useState();
   const [isLoading, setIsLoading] = useState(false);
-  const myUrl = "https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4/";
+  const baseUrl = "https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4/";
 
+  // response_type=code&redirect_uri=[redirect_uri]&client_id=[client_id]&state=[state]&aud=[audience]
+  const responseType = "code";
+  // TODO: figure out env
+  // const clientId = process.env.CLIENT_ID;
+  const clientId = "4ac28ca5-ff23-417c-a46b-b3670ba00e6d";
+  const redirectUri = "http://localhost:3000/redirect";
+  const myScope = "patient/*.read";
+  // TODO: figure out my state
+  const myState = "";
+
+  // run auth
+
+  useEffect(() => {
+    if (runAuth) {
+      const authUrl = `https://fhir.epic.com/interconnect-fhir-oauth/oauth2/authorize?response_type=${responseType}&client_id=${clientId}&redirect_uri=${encodeURIComponent(
+        redirectUri
+      )}&scope=${encodeURIComponent(myScope)}&state=${myState}`;
+
+      window.location.href = authUrl;
+    }
+  }, [runAuth]);
+
+  // run fetch
   useEffect(() => {
     if (runFetch) {
       setData(undefined);
@@ -28,7 +53,7 @@ export default function Main() {
 
       const controller = new AbortController();
 
-      fetch(myUrl, { signal: controller.signal })
+      fetch(fullAuth, { signal: controller.signal })
         .then((res) => {
           if (res.status === 200 || res.status === 201) {
             return res.json();
@@ -65,6 +90,14 @@ export default function Main() {
     <div id="home" className=" w-full h-screen text-center bg-grad">
       <div className=" max-w-[1240px] w-full h-full mx-auto p-2 flex justify-center items-center">
         <div>
+          <div className="mb-3">
+            <button
+              className=" rounded-md bg-[#748D92] text-black px-2 py-1"
+              onClick={() => setRunAuth(true)}
+            >
+              Authorize
+            </button>
+          </div>
           <div className="mb-3">
             <button
               className=" rounded-md bg-[#748D92] text-black px-2 py-1"
