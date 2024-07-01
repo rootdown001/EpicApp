@@ -15,20 +15,49 @@ export default function Main() {
   };
 
   const [runFetch, setRunFetch] = useState(false);
+  const [data, setData] = useState();
+  const [isError, setIsError] = useState();
+  const [isLoading, setIsLoading] = useState(false);
+  const myUrl = "https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4/";
 
   useEffect(() => {
     if (runFetch) {
-      try {
-        fetch("https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4/")
-          .then((res) => res.json())
-          .then((data) => {
-            console.log(data);
+      setData(undefined);
+      setIsError(undefined);
+      setIsLoading(true);
+
+      const controller = new AbortController();
+
+      fetch(myUrl, { signal: controller.signal })
+        .then((res) => {
+          if (res.status === 200 || res.status === 201) {
+            return res.json();
+          } else {
+            return Promise.reject(res);
+          }
+        })
+        .then((data) => {
+          setData(data);
+          // Here we reset runFetch back to false after fetching data
+          setRunFetch(false);
+        })
+        .catch((e) => {
+          console.log("error in catch: ", e);
+          if (e?.name === "AbortError") return;
+          setIsError(e);
+        })
+        .finally(() => {
+          if (controller.signal.aborted) return;
+          setIsLoading(false);
+          if (!controller.signal.aborted) {
+            // Also reset runFetch to false here in case of errors
             setRunFetch(false);
-          });
-      } catch (error) {
-        console.log(error);
-        setRunFetch(false);
-      }
+          }
+        });
+
+      return () => {
+        controller.abort();
+      };
     }
   }, [runFetch]);
 

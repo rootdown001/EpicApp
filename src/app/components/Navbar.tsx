@@ -87,7 +87,7 @@ export default function Navbar() {
     >
       <div className="flex justify-between items-center w-full h-full px-2 2xl:px-16">
         <Link href="/">
-          <Image src={navLogo} alt="/" width={180} />
+          <Image src={navLogo} alt="/" priority width={180} />
         </Link>
 
         <div>
@@ -133,7 +133,7 @@ export default function Navbar() {
           <div>
             <div className="flex w-full items-center justify-between">
               <Link href="/">
-                <Image src={navLogo} alt="/" width={200} />
+                <Image src={navLogo} alt="/" priority width={200} />
               </Link>
               <div
                 className=" rounded-full shadow-md shadow-gray-400 p-2 cursor-pointer"

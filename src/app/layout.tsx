@@ -4,8 +4,8 @@ import Navbar from "./components/Navbar";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
-  title: "Lance | React Developer",
-  description: "React Blog with Placeholder API",
+  title: "EpicCare Insights",
+  description: "Epic + AI",
 };
 
 export default function RootLayout({
@@ -15,7 +15,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>
+      <body suppressHydrationWarning={true}>
         <Navbar />
         <div>{children}</div>
         <SpeedInsights />
