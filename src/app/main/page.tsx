@@ -25,66 +25,76 @@ export default function Main() {
   // response_type=code&redirect_uri=[redirect_uri]&client_id=[client_id]&state=[state]&aud=[audience]
   const responseType = "code";
   // TODO: figure out env
-  // const clientId = process.env.CLIENT_ID;
-  const clientId = "4ac28ca5-ff23-417c-a46b-b3670ba00e6d";
-  const redirectUri = "http://localhost:3000/redirect";
-  const myScope = "patient/*.read";
+  // const client_id = clientId
+  // const clientId = "4ac28ca5-ff23-417c-a46b-b3670ba00e6d";
+  // const client_id = non-production
+  const clientId = encodeURIComponent("ea9b08eb-030c-41e5-b24b-e4b95ce068e5");
+  // redirect for development
+  const redirectUri = encodeURIComponent("http://localhost:3000/redirect");
+  const myScope = encodeURIComponent("patient/*.read");
   // TODO: figure out my state
-  const myState = "";
+  const myState = "abc123";
+  const myAud = encodeURIComponent(
+    "https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4/"
+  );
 
   // run auth
 
   useEffect(() => {
     if (runAuth) {
-      const authUrl = `https://fhir.epic.com/interconnect-fhir-oauth/oauth2/authorize?response_type=${responseType}&client_id=${clientId}&redirect_uri=${encodeURIComponent(
-        redirectUri
-      )}&scope=${encodeURIComponent(myScope)}&state=${myState}`;
-
+      const authUrl = `https://fhir.epic.com/interconnect-fhir-oauth/oauth2/authorize?response_type=${responseType}&client_id=${clientId}&redirect_uri=${redirectUri}&state=${myState}&aud=${myAud}&scope=${myScope}`;
+      // fetch(authUrl).then((res) => console.log(res));
       window.location.href = authUrl;
     }
   }, [runAuth]);
 
+  // useEffect(() => {
+  //   const authUrl = `https://fhir.epic.com/interconnect-fhir-oauth/oauth2/authorize?response_type=${responseType}&client_id=${clientId}&redirect_uri=${redirectUri}&state=${myState}&aud=${myAud}&scope=${myScope}`;
+  //   // fetch(authUrl).then((res) => console.log(res));
+  //   window.location.href = authUrl;
+  // }, []);
+
   // run fetch
-  useEffect(() => {
-    if (runFetch) {
-      setData(undefined);
-      setIsError(undefined);
-      setIsLoading(true);
+  // useEffect(() => {
+  //   if (runFetch) {
+  //     setData(undefined);
+  //     setIsError(undefined);
+  //     setIsLoading(true);
 
-      const controller = new AbortController();
+  //     const controller = new AbortController();
 
-      fetch(fullAuth, { signal: controller.signal })
-        .then((res) => {
-          if (res.status === 200 || res.status === 201) {
-            return res.json();
-          } else {
-            return Promise.reject(res);
-          }
-        })
-        .then((data) => {
-          setData(data);
-          // Here we reset runFetch back to false after fetching data
-          setRunFetch(false);
-        })
-        .catch((e) => {
-          console.log("error in catch: ", e);
-          if (e?.name === "AbortError") return;
-          setIsError(e);
-        })
-        .finally(() => {
-          if (controller.signal.aborted) return;
-          setIsLoading(false);
-          if (!controller.signal.aborted) {
-            // Also reset runFetch to false here in case of errors
-            setRunFetch(false);
-          }
-        });
+  //     fetch(fullAuth, { signal: controller.signal })
+  //       .then((res) => {
+  //         if (res.status === 200 || res.status === 201) {
+  //           return res.json();
+  //         } else {
+  //           return Promise.reject(res);
+  //         }
+  //       })
+  //       .then((data) => {
+  //         setData(data);
+  //         // Here we reset runFetch back to false after fetching data
+  //         setRunFetch(false);
+  //       })
+  //       .catch((e) => {
+  //         console.log("error in catch: ", e);
+  //         if (e?.name === "AbortError") return;
+  //         setIsError(e);
+  //       })
+  //       .finally(() => {
+  //         if (controller.signal.aborted) return;
+  //         setIsLoading(false);
+  //         if (!controller.signal.aborted) {
+  //           // Also reset runFetch to false here in case of errors
+  //           setRunFetch(false);
+  //         }
+  //       });
 
-      return () => {
-        controller.abort();
-      };
-    }
-  }, [runFetch]);
+  //     return () => {
+  //       controller.abort();
+  //     };
+  //   }
+  // }, [runFetch]);
 
   return (
     <div id="home" className=" w-full h-screen text-center bg-grad">
@@ -99,12 +109,12 @@ export default function Main() {
             </button>
           </div>
           <div className="mb-3">
-            <button
+            {/* <button
               className=" rounded-md bg-[#748D92] text-black px-2 py-1"
               onClick={() => setRunFetch(true)}
             >
               Run API
-            </button>
+            </button> */}
           </div>
           <div className="flex items-center justify-between w-[440px] m-auto py-4 px-4">
             <div className="rounded-full shadow-lg shadow-black/50 p-4 cursor-pointer hover:scale-110 ease-in duration-300">
