@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 export default function Redirect() {
@@ -26,10 +26,7 @@ export default function Redirect() {
     return keyPair;
   }
 
-  async function storeKeyPair(keyPair: {
-    publicKey: CryptoKey;
-    privateKey: CryptoKey;
-  }) {
+  async function storeKeyPair(keyPair: CryptoKeyPair) {
     // Open the IndexedDB database named "keyPairDB" with version 1
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
       const request = indexedDB.open("keyPairDB", 1);
@@ -49,54 +46,15 @@ export default function Redirect() {
     const tx = db.transaction("keys", "readwrite");
     const store = tx.objectStore("keys");
 
-    // // Export keys to JWK format before storing
-    // const exportedPublicKey = await crypto.subtle.exportKey(
-    //   "jwk",
-    //   keyPair.publicKey
-    // );
-    // const exportedPrivateKey = await crypto.subtle.exportKey(
-    //   "jwk",
-    //   keyPair.privateKey
-    // );
-
-    // console.log("Type of keyPair.publicKey:", typeof keyPair.publicKey);
-    // if (keyPair.publicKey instanceof CryptoKey) {
-    //   console.log("keyPair.publicKey is a CryptoKey");
-    // } else {
-    //   console.log("keyPair.publicKey is not a CryptoKey");
-    // }
-
-    // Export the keys to JWK format before storing them in IndexedDB.
-
-    try {
-      const exportedPublicKey = await crypto.subtle.exportKey(
-        "jwk",
-        keyPair.publicKey
-      );
-      const exportedPrivateKey = await crypto.subtle.exportKey(
-        "jwk",
-        keyPair.privateKey
-      );
-
-      await Promise.all([
-        store.put({ id: "publicKey", key: exportedPublicKey }),
-        store.put({ id: "privateKey", key: exportedPrivateKey }),
-      ]);
-    } catch (error) {
-      tx.abort();
-      throw error;
-    }
-
     // Store the public and private keys
+    await store.put({ id: "publicKey", key: keyPair.publicKey });
+    await store.put({ id: "privateKey", key: keyPair.privateKey });
 
     // Close the transaction
     await tx.oncomplete;
   }
 
-  async function retrieveKeys(): Promise<{
-    publicKeyEntry: CryptoKey;
-    privateKeyEntry: CryptoKey;
-  }> {
+  async function retrieveKeys() {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
       const request = indexedDB.open("keyPairDB", 1);
       request.onsuccess = () => resolve(request.result);
@@ -106,70 +64,16 @@ export default function Redirect() {
     const tx = db.transaction("keys", "readonly");
     const store = tx.objectStore("keys");
 
-    const publicKeyEntry = await store.get("publicKey");
-    const privateKeyEntry = await store.get("privateKey");
-
-    // console.log("Type of keyPair.publicKey:", typeof publicKeyEntry);
-    // if (publicKeyEntry instanceof CryptoKey) {
-    //   console.log("publicKeyEntry is a CryptoKey");
-    // } else {
-    //   console.log("publicKeyEntry is not a CryptoKey");
-    // }
-
-    // // Convert JWK back to CryptoKey
-    // const publicKeyCrypto = await crypto.subtle.importKey(
-    //   "jwk",
-    //   publicKeyEntry.key,
-    //   { name: "RSA-OAEP", hash: "SHA-256" },
-    //   true,
-    //   ["encrypt"]
-    // );
-
-    // const privateKeyCrypto = await crypto.subtle.importKey(
-    //   "jwk",
-    //   privateKeyEntry.key,
-    //   { name: "RSA-OAEP", hash: "SHA-256" },
-    //   true,
-    //   ["decrypt"]
-    // );
+    const publicKey = await store.get("publicKey");
+    const privateKey = await store.get("privateKey");
 
     await tx.oncomplete;
 
-    console.log("publicKeyCrypto: ", publicKeyEntry);
+    console.log("Retrieved publicKey: ", publicKey);
+    console.log("Retrieved privateKey: ", privateKey);
 
-    const publicKeyCrypto = await crypto.subtle.importKey(
-      "jwk",
-      publicKeyEntry.key,
-      { name: "RSA-OAEP", hash: "SHA-256" },
-      true,
-      ["encrypt"]
-    );
-
-    const privateKeyCrypto = await crypto.subtle.importKey(
-      "jwk",
-      privateKeyEntry.key,
-      { name: "RSA-OAEP", hash: "SHA-256" },
-      true,
-      ["decrypt"]
-    );
-
-    console.log("Retrieved publicKeyEntry: ", publicKeyEntry);
-    console.log("Retrieved privateKeyEntry: ", privateKeyEntry);
-
-    return {
-      publicKeyEntry: publicKeyCrypto,
-      privateKeyEntry: privateKeyCrypto,
-    };
+    return { publicKey, privateKey };
   }
-
-  // async function exportPublicKeyToJWK(publicKey: CryptoKey) {
-  //   const exportedKey = await crypto.subtle.exportKey("jwk", publicKey);
-  //   const { kty, e, n } = exportedKey;
-  //   console.log("Key Type:", kty);
-  //   console.log("Exponent:", e);
-  //   console.log("Modulus:", n);
-  //   return { kty, e, n };
-  // }
 
   useEffect(() => {
     const code = searchParams.get("code");
@@ -187,11 +91,12 @@ export default function Redirect() {
     }
 
     if (code && state) {
-      const body = `grant_type=${encodeURIComponent(
-        "authorization_code"
-      )}&code=${encodeURIComponent(code)}&redirect_uri=${encodeURIComponent(
-        redirectUri
-      )}&client_id=${encodeURIComponent(clientId)}`;
+      const body = new URLSearchParams({
+        grant_type: "authorization_code",
+        code: code,
+        redirect_uri: redirectUri,
+        client_id: clientId,
+      }).toString();
 
       fetch("https://fhir.epic.com/interconnect-fhir-oauth/oauth2/token", {
         method: "POST",
@@ -201,13 +106,13 @@ export default function Redirect() {
         body: body,
       })
         .then((response) => {
-          response.json().then((data) => {
-            if (!response.ok) {
-              console.error("Response Error Data: ", data);
-              throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            console.log("Access Token Data: ", data);
-          });
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then((data) => {
+          console.log(data);
         })
         .catch((error) => {
           console.error("Error:", error);
@@ -217,15 +122,6 @@ export default function Redirect() {
     async function handleKeyPair() {
       const keyPair = await generateKeyPair();
       await storeKeyPair(keyPair);
-      const storedKeys = await retrieveKeys();
-      // const publicKeyFeatures = await exportPublicKeyToJWK(
-      //   storedKeys.publicKeyEntry
-      // );
-
-      // setPublicKey(storedKeys.publicKeyEntry.)
-      // if (storedKeys.publicKey && storedKeys.publicKey instanceof CryptoKey) {
-      //   await exportPublicKeyToJWK(storedKeys.publicKey);
-      // }
     }
 
     handleKeyPair()
@@ -234,6 +130,7 @@ export default function Redirect() {
         console.log("Result from retrieveKeys: ", result);
       });
   }, [searchParams]);
+
   // // return null; // or some loading indication while you process the code
 
   return (
