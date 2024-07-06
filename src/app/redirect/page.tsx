@@ -26,7 +26,10 @@ export default function Redirect() {
     return keyPair;
   }
 
-  async function storeKeyPair(keyPair: CryptoKeyPair) {
+  async function storeKeyPair(keyPair: {
+    publicKey: CryptoKey;
+    privateKey: CryptoKey;
+  }) {
     // Open the IndexedDB database named "keyPairDB" with version 1
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
       const request = indexedDB.open("keyPairDB", 1);
@@ -46,15 +49,54 @@ export default function Redirect() {
     const tx = db.transaction("keys", "readwrite");
     const store = tx.objectStore("keys");
 
+    // // Export keys to JWK format before storing
+    // const exportedPublicKey = await crypto.subtle.exportKey(
+    //   "jwk",
+    //   keyPair.publicKey
+    // );
+    // const exportedPrivateKey = await crypto.subtle.exportKey(
+    //   "jwk",
+    //   keyPair.privateKey
+    // );
+
+    // console.log("Type of keyPair.publicKey:", typeof keyPair.publicKey);
+    // if (keyPair.publicKey instanceof CryptoKey) {
+    //   console.log("keyPair.publicKey is a CryptoKey");
+    // } else {
+    //   console.log("keyPair.publicKey is not a CryptoKey");
+    // }
+
+    // Export the keys to JWK format before storing them in IndexedDB.
+
+    try {
+      const exportedPublicKey = await crypto.subtle.exportKey(
+        "jwk",
+        keyPair.publicKey
+      );
+      const exportedPrivateKey = await crypto.subtle.exportKey(
+        "jwk",
+        keyPair.privateKey
+      );
+
+      await Promise.all([
+        store.put({ id: "publicKey", key: exportedPublicKey }),
+        store.put({ id: "privateKey", key: exportedPrivateKey }),
+      ]);
+    } catch (error) {
+      tx.abort();
+      throw error;
+    }
+
     // Store the public and private keys
-    await store.put({ id: "publicKey", key: keyPair.publicKey });
-    await store.put({ id: "privateKey", key: keyPair.privateKey });
 
     // Close the transaction
     await tx.oncomplete;
   }
 
-  async function retrieveKeys() {
+  async function retrieveKeys(): Promise<{
+    publicKeyEntry: CryptoKey;
+    privateKeyEntry: CryptoKey;
+  }> {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
       const request = indexedDB.open("keyPairDB", 1);
       request.onsuccess = () => resolve(request.result);
@@ -64,16 +106,70 @@ export default function Redirect() {
     const tx = db.transaction("keys", "readonly");
     const store = tx.objectStore("keys");
 
-    const publicKey = await store.get("publicKey");
-    const privateKey = await store.get("privateKey");
+    const publicKeyEntry = await store.get("publicKey");
+    const privateKeyEntry = await store.get("privateKey");
+
+    // console.log("Type of keyPair.publicKey:", typeof publicKeyEntry);
+    // if (publicKeyEntry instanceof CryptoKey) {
+    //   console.log("publicKeyEntry is a CryptoKey");
+    // } else {
+    //   console.log("publicKeyEntry is not a CryptoKey");
+    // }
+
+    // // Convert JWK back to CryptoKey
+    // const publicKeyCrypto = await crypto.subtle.importKey(
+    //   "jwk",
+    //   publicKeyEntry.key,
+    //   { name: "RSA-OAEP", hash: "SHA-256" },
+    //   true,
+    //   ["encrypt"]
+    // );
+
+    // const privateKeyCrypto = await crypto.subtle.importKey(
+    //   "jwk",
+    //   privateKeyEntry.key,
+    //   { name: "RSA-OAEP", hash: "SHA-256" },
+    //   true,
+    //   ["decrypt"]
+    // );
 
     await tx.oncomplete;
 
-    console.log("Retrieved publicKey: ", publicKey);
-    console.log("Retrieved privateKey: ", privateKey);
+    console.log("publicKeyCrypto: ", publicKeyEntry);
 
-    return { publicKey, privateKey };
+    const publicKeyCrypto = await crypto.subtle.importKey(
+      "jwk",
+      publicKeyEntry.key,
+      { name: "RSA-OAEP", hash: "SHA-256" },
+      true,
+      ["encrypt"]
+    );
+
+    const privateKeyCrypto = await crypto.subtle.importKey(
+      "jwk",
+      privateKeyEntry.key,
+      { name: "RSA-OAEP", hash: "SHA-256" },
+      true,
+      ["decrypt"]
+    );
+
+    console.log("Retrieved publicKeyEntry: ", publicKeyEntry);
+    console.log("Retrieved privateKeyEntry: ", privateKeyEntry);
+
+    return {
+      publicKeyEntry: publicKeyCrypto,
+      privateKeyEntry: privateKeyCrypto,
+    };
   }
+
+  // async function exportPublicKeyToJWK(publicKey: CryptoKey) {
+  //   const exportedKey = await crypto.subtle.exportKey("jwk", publicKey);
+  //   const { kty, e, n } = exportedKey;
+  //   console.log("Key Type:", kty);
+  //   console.log("Exponent:", e);
+  //   console.log("Modulus:", n);
+  //   return { kty, e, n };
+  // }
 
   useEffect(() => {
     const code = searchParams.get("code");
@@ -121,6 +217,15 @@ export default function Redirect() {
     async function handleKeyPair() {
       const keyPair = await generateKeyPair();
       await storeKeyPair(keyPair);
+      const storedKeys = await retrieveKeys();
+      // const publicKeyFeatures = await exportPublicKeyToJWK(
+      //   storedKeys.publicKeyEntry
+      // );
+
+      // setPublicKey(storedKeys.publicKeyEntry.)
+      // if (storedKeys.publicKey && storedKeys.publicKey instanceof CryptoKey) {
+      //   await exportPublicKeyToJWK(storedKeys.publicKey);
+      // }
     }
 
     handleKeyPair()
