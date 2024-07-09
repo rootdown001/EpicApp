@@ -101,11 +101,22 @@ export default function Redirect() {
       iss: clientId,
     };
     console.log("🚀 ~ generateJWT ~ payload:", payload);
+
+    // Ensure the privateKey conforms to the JWK structure expected by jose
+    const privateKeyJWK = privateKey as jose.JWK;
+    const privateKeyObj = await jose.importJWK(privateKeyJWK, "RS256");
+
+    const jwt = await new jose.SignJWT(payload)
+      .setProtectedHeader({ alg: "RS256" })
+      .sign(privateKeyObj);
+    // console.log("🚀 ~ generateJWT ~ jwt:", jwt);
+
+    return jwt;
   }
 
   async function getAccessToken(clientId: string, privateKey: JsonWebKey) {
-    console.log("in getAccessToken");
     const jwt = await generateJWT(clientId, privateKey);
+    console.log("🚀 ~ getAccessToken ~ jwt:", jwt);
   }
 
   async function handleRedirectPage() {
