@@ -1,16 +1,11 @@
 "use client";
-
+// TODO: check jwt - with jwt.io
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as jose from "jose";
 
 export default function Redirect() {
-  // const router = useRouter();
-
   const searchParams = useSearchParams();
-  // const [publicKey, setPublicKey] = useState<string | undefined>(undefined);
-  // const [privateKey, setPrivateKey] = useState<string | undefined>(undefined);
-  // const [initialAccessToken, setInitialAccessToken] = useState("");
 
   // TODO: put this in .env
   const clientId = "ea9b08eb-030c-41e5-b24b-e4b95ce068e5";
@@ -20,7 +15,6 @@ export default function Redirect() {
     // Generate a key pair using RSA-OAEP algorithm
     const keyPair = await window.crypto.subtle.generateKey(
       {
-        // changed - name: "RSA-OAEP",
         name: "RSASSA-PKCS1-v1_5",
         modulusLength: 2048,
         publicExponent: new Uint8Array([1, 0, 1]),
@@ -34,12 +28,11 @@ export default function Redirect() {
       "jwk",
       keyPair.publicKey
     );
-    // console.log("🚀 ~ generateKeyPair ~ publicKey:", publicKey);
+
     const privateKey = await window.crypto.subtle.exportKey(
       "jwk",
       keyPair.privateKey
     );
-    // console.log("🚀 ~ generateKeyPair ~ privateKey:", privateKey);
 
     return { publicKey, privateKey };
   }
@@ -109,7 +102,6 @@ export default function Redirect() {
     const jwt = await new jose.SignJWT(payload)
       .setProtectedHeader({ alg: "RS256" })
       .sign(privateKeyObj);
-    // console.log("🚀 ~ generateJWT ~ jwt:", jwt);
 
     return jwt;
   }
@@ -166,53 +158,6 @@ export default function Redirect() {
     }
   }
 
-  // NOT CALLING THIS
-  // async function storeKeyPair(keyPair: CryptoKeyPair) {
-  //   const db = await new Promise<IDBDatabase>((resolve, reject) => {
-  //     const request = indexedDB.open("keyPairDB", 1);
-  //     request.onupgradeneeded = () => {
-  //       const db = request.result;
-  //       db.createObjectStore("keys", { keyPath: "id" });
-  //     };
-  //     request.onsuccess = () => resolve(request.result);
-  //     request.onerror = () => reject(request.error);
-  //   });
-
-  //   const tx = db.transaction("keys", "readwrite");
-  //   const store = tx.objectStore("keys");
-
-  //   const objectStoreRequest = store.clear();
-
-  //   objectStoreRequest.onsuccess = (event) => {
-  //     // report the success of our request
-  //     console.log("cleared");
-  //   };
-
-  //   await store.put({ id: "publicKey", key: keyPair.publicKey });
-  //   await store.put({ id: "privateKey", key: keyPair.privateKey });
-
-  //   await tx.oncomplete;
-  // }
-
-  // NOT CALLING THIS
-  // async function retrieveKeys() {
-  //   const db = await new Promise<IDBDatabase>((resolve, reject) => {
-  //     const request = indexedDB.open("keyPairDB", 1);
-  //     request.onsuccess = () => resolve(request.result);
-  //     request.onerror = () => reject(request.error);
-  //   });
-
-  //   const tx = db.transaction("keys", "readonly");
-  //   const store = tx.objectStore("keys");
-
-  //   const publicKey = await store.get("publicKey");
-  //   const privateKey = await store.get("privateKey");
-
-  //   await tx.oncomplete;
-
-  //   return { publicKey, privateKey };
-  // }
-
   useEffect(() => {
     const code = searchParams.get("code");
     const state = searchParams.get("state");
@@ -265,19 +210,7 @@ export default function Redirect() {
           console.error("Error:", error);
         });
     }
-
-    // async function handleKeyPair() {
-    //   const keyPair = await generateKeyPair();
-    //   await storeKeyPair(keyPair);
-    // }
-
-    // handleKeyPair()
-    //   .then(retrieveKeys)
-    //   .then((result) => {
-    //     console.log("Result from retrieveKeys: ", result);
-    //   });
   }, [searchParams]);
-  // // return null; // or some loading indication while you process the code
 
   return (
     <div id="home" className=" w-full h-screen text-center bg-grad">
