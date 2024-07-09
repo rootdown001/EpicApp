@@ -7,8 +7,8 @@ export default function Redirect() {
   // const router = useRouter();
 
   const searchParams = useSearchParams();
-  const [publicKey, setPublicKey] = useState<string | undefined>(undefined);
-  const [privateKey, setPrivateKey] = useState<string | undefined>(undefined);
+  // const [publicKey, setPublicKey] = useState<string | undefined>(undefined);
+  // const [privateKey, setPrivateKey] = useState<string | undefined>(undefined);
 
   async function generateKeyPair() {
     // Generate a key pair using RSA-OAEP algorithm
