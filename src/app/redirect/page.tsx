@@ -79,6 +79,34 @@ export default function Redirect() {
     return { registrationData, privateKey };
   }
 
+  async function generateJWT(clientId: string, privateKey: JsonWebKey) {
+    console.log(
+      "in generateJWT. clientId: ",
+      clientId,
+      " privateKey: ",
+      privateKey
+    );
+
+    const now = Math.floor(Date.now() / 1000);
+    console.log("🚀 ~ generateJWT ~ now:", now);
+
+    const payload = {
+      sub: clientId,
+      aud: "https://fhir.epic.com/interconnect-fhir-oauth/oauth2/token",
+      jti: crypto.randomUUID(),
+      nbf: now,
+      exp: now + 300,
+      iat: now,
+      iss: clientId,
+    };
+    console.log("🚀 ~ generateJWT ~ payload:", payload);
+  }
+
+  async function getAccessToken(clientId: string, privateKey: JsonWebKey) {
+    console.log("in getAccessToken");
+    const jwt = await generateJWT(clientId, privateKey);
+  }
+
   async function handleRedirectPage() {
     try {
       const { registrationData, privateKey } = await registerDynamicClient(
@@ -86,6 +114,12 @@ export default function Redirect() {
         clientId
       );
       console.log("Dynamic client registered:", registrationData);
+
+      const accessToken = await getAccessToken(
+        registrationData.client_id,
+        privateKey
+      );
+      // console.log('Access token obtained:', accessToken);
     } catch (error) {
       console.log("Error: ", error);
     }
