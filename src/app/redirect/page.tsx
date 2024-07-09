@@ -117,6 +117,33 @@ export default function Redirect() {
   async function getAccessToken(clientId: string, privateKey: JsonWebKey) {
     const jwt = await generateJWT(clientId, privateKey);
     console.log("🚀 ~ getAccessToken ~ jwt:", jwt);
+
+    const tokenResponse = await fetch(
+      "https://fhir.epic.com/interconnect-fhir-oauth/oauth2/token",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+          assertion: jwt,
+          client_id: clientId,
+        }),
+      }
+    );
+
+    if (!tokenResponse.ok) {
+      const errorText = await tokenResponse.text();
+      console.error("Failed to obtain access token:", errorText);
+      throw new Error(`Failed to obtain access token: ${errorText}`);
+    }
+
+    const tokenData = await tokenResponse.json();
+    const accessToken = tokenData.access_token;
+
+    console.log("Access token obtained:", accessToken);
+    return accessToken;
   }
 
   async function handleRedirectPage() {
@@ -126,6 +153,8 @@ export default function Redirect() {
         clientId
       );
       console.log("Dynamic client registered:", registrationData);
+
+      console.log("registration data clientId: ", registrationData.client_id);
 
       const accessToken = await getAccessToken(
         registrationData.client_id,
