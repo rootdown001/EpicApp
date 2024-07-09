@@ -14,66 +14,76 @@ export default function Redirect() {
     // Generate a key pair using RSA-OAEP algorithm
     const keyPair = await window.crypto.subtle.generateKey(
       {
-        name: "RSA-OAEP",
+        // changed - name: "RSA-OAEP",
+        name: "RSASSA-PKCS1-v1_5",
         modulusLength: 2048,
         publicExponent: new Uint8Array([1, 0, 1]),
         hash: "SHA-256",
       },
       true,
-      ["encrypt", "decrypt"]
+      ["sign", "verify"]
     );
 
-    return keyPair;
-  }
-
-  async function storeKeyPair(keyPair: CryptoKeyPair) {
-    // Open the IndexedDB database named "keyPairDB" with version 1
-    const db = await new Promise<IDBDatabase>((resolve, reject) => {
-      const request = indexedDB.open("keyPairDB", 1);
-
-      // If the database needs to be upgraded (e.g., first time it's being opened)
-      request.onupgradeneeded = () => {
-        const db = request.result;
-        // Create an object store named "keys" with the key path "id"
-        db.createObjectStore("keys", { keyPath: "id" });
-      };
-
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-
-    // Start a transaction to store the keys
-    const tx = db.transaction("keys", "readwrite");
-    const store = tx.objectStore("keys");
-
-    // Store the public and private keys
-    await store.put({ id: "publicKey", key: keyPair.publicKey });
-    await store.put({ id: "privateKey", key: keyPair.privateKey });
-
-    // Close the transaction
-    await tx.oncomplete;
-  }
-
-  async function retrieveKeys() {
-    const db = await new Promise<IDBDatabase>((resolve, reject) => {
-      const request = indexedDB.open("keyPairDB", 1);
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-
-    const tx = db.transaction("keys", "readonly");
-    const store = tx.objectStore("keys");
-
-    const publicKey = await store.get("publicKey");
-    const privateKey = await store.get("privateKey");
-
-    await tx.oncomplete;
-
-    console.log("Retrieved publicKey: ", publicKey);
-    console.log("Retrieved privateKey: ", privateKey);
+    const publicKey = await window.crypto.subtle.exportKey(
+      "jwk",
+      keyPair.publicKey
+    );
+    console.log("🚀 ~ generateKeyPair ~ publicKey:", publicKey);
+    const privateKey = await window.crypto.subtle.exportKey(
+      "jwk",
+      keyPair.privateKey
+    );
+    console.log("🚀 ~ generateKeyPair ~ privateKey:", privateKey);
 
     return { publicKey, privateKey };
   }
+
+  // NOT CALLING THIS
+  // async function storeKeyPair(keyPair: CryptoKeyPair) {
+  //   const db = await new Promise<IDBDatabase>((resolve, reject) => {
+  //     const request = indexedDB.open("keyPairDB", 1);
+  //     request.onupgradeneeded = () => {
+  //       const db = request.result;
+  //       db.createObjectStore("keys", { keyPath: "id" });
+  //     };
+  //     request.onsuccess = () => resolve(request.result);
+  //     request.onerror = () => reject(request.error);
+  //   });
+
+  //   const tx = db.transaction("keys", "readwrite");
+  //   const store = tx.objectStore("keys");
+
+  //   const objectStoreRequest = store.clear();
+
+  //   objectStoreRequest.onsuccess = (event) => {
+  //     // report the success of our request
+  //     console.log("cleared");
+  //   };
+
+  //   await store.put({ id: "publicKey", key: keyPair.publicKey });
+  //   await store.put({ id: "privateKey", key: keyPair.privateKey });
+
+  //   await tx.oncomplete;
+  // }
+
+  // NOT CALLING THIS
+  // async function retrieveKeys() {
+  //   const db = await new Promise<IDBDatabase>((resolve, reject) => {
+  //     const request = indexedDB.open("keyPairDB", 1);
+  //     request.onsuccess = () => resolve(request.result);
+  //     request.onerror = () => reject(request.error);
+  //   });
+
+  //   const tx = db.transaction("keys", "readonly");
+  //   const store = tx.objectStore("keys");
+
+  //   const publicKey = await store.get("publicKey");
+  //   const privateKey = await store.get("privateKey");
+
+  //   await tx.oncomplete;
+
+  //   return { publicKey, privateKey };
+  // }
 
   useEffect(() => {
     const code = searchParams.get("code");
@@ -118,16 +128,18 @@ export default function Redirect() {
         });
     }
 
-    async function handleKeyPair() {
-      const keyPair = await generateKeyPair();
-      await storeKeyPair(keyPair);
-    }
+    generateKeyPair();
 
-    handleKeyPair()
-      .then(retrieveKeys)
-      .then((result) => {
-        console.log("Result from retrieveKeys: ", result);
-      });
+    // async function handleKeyPair() {
+    //   const keyPair = await generateKeyPair();
+    //   await storeKeyPair(keyPair);
+    // }
+
+    // handleKeyPair()
+    //   .then(retrieveKeys)
+    //   .then((result) => {
+    //     console.log("Result from retrieveKeys: ", result);
+    //   });
   }, [searchParams]);
   // // return null; // or some loading indication while you process the code
 
