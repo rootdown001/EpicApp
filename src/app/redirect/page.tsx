@@ -9,6 +9,11 @@ export default function Redirect() {
   const searchParams = useSearchParams();
   // const [publicKey, setPublicKey] = useState<string | undefined>(undefined);
   // const [privateKey, setPrivateKey] = useState<string | undefined>(undefined);
+  // const [initialAccessToken, setInitialAccessToken] = useState("");
+
+  // TODO: put this in .env
+  const clientId = "ea9b08eb-030c-41e5-b24b-e4b95ce068e5";
+  var initialAccessToken = "";
 
   async function generateKeyPair() {
     // Generate a key pair using RSA-OAEP algorithm
@@ -28,14 +33,62 @@ export default function Redirect() {
       "jwk",
       keyPair.publicKey
     );
-    console.log("🚀 ~ generateKeyPair ~ publicKey:", publicKey);
+    // console.log("🚀 ~ generateKeyPair ~ publicKey:", publicKey);
     const privateKey = await window.crypto.subtle.exportKey(
       "jwk",
       keyPair.privateKey
     );
-    console.log("🚀 ~ generateKeyPair ~ privateKey:", privateKey);
+    // console.log("🚀 ~ generateKeyPair ~ privateKey:", privateKey);
 
     return { publicKey, privateKey };
+  }
+
+  async function registerDynamicClient(
+    initialAcessToken: string,
+    clientId: string
+  ) {
+    console.log("🚀 ~ Redirect ~ initialAcessToken:", initialAcessToken);
+
+    const { publicKey, privateKey } = await generateKeyPair();
+    console.log("🚀 ~ Redirect ~ privateKey:", privateKey);
+    console.log("🚀 ~ Redirect ~ publicKey:", publicKey);
+
+    const registrationResponse = await fetch(
+      "https://fhir.epic.com/interconnect-fhir-oauth/oauth2/register",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${initialAccessToken}`,
+        },
+        body: JSON.stringify({
+          software_id: clientId,
+          jwks: {
+            keys: [publicKey],
+          },
+        }),
+      }
+    );
+    if (!registrationResponse.ok) {
+      throw new Error("Failed to register dynamic client");
+    }
+
+    const registrationData = await registrationResponse.json();
+    console.log("🚀 ~ Redirect ~ registrationData:", registrationData);
+
+    return { registrationData, privateKey };
+  }
+
+  async function handleRedirectPage() {
+    try {
+      const { registrationData, privateKey } = await registerDynamicClient(
+        initialAccessToken,
+        clientId
+      );
+      console.log("Dynamic client registered:", registrationData);
+    } catch (error) {
+      console.log("Error: ", error);
+    }
   }
 
   // NOT CALLING THIS
@@ -120,15 +173,23 @@ export default function Redirect() {
               console.error("Response Error Data: ", data);
               throw new Error(`HTTP error! Status: ${response.status}`);
             }
-            console.log("Access Token Data: ", data);
+
+            initialAccessToken = data.access_token;
+
+            console.log("initialAccessToken: ", initialAccessToken);
+            [];
           });
+        })
+        .then(() => {
+          handleRedirectPage();
+        })
+        .then((response) => {
+          console.log("response: ", response);
         })
         .catch((error) => {
           console.error("Error:", error);
         });
     }
-
-    generateKeyPair();
 
     // async function handleKeyPair() {
     //   const keyPair = await generateKeyPair();
