@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import * as jose from "jose";
 
 export default function Redirect() {
   // const router = useRouter();
