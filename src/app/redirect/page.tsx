@@ -9,7 +9,9 @@ export default function Redirect() {
 
   // TODO: put this in .env
   const clientId = "ea9b08eb-030c-41e5-b24b-e4b95ce068e5";
-  var initialAccessToken = "";
+  const redirectUri = "http://localhost:3000/redirect";
+  const [initialAccessToken, setInitialAccessToken] = useState("");
+  // var initialAccessToken = "";
 
   async function generateKeyPair() {
     // Generate a key pair using RSA-OAEP algorithm
@@ -28,11 +30,13 @@ export default function Redirect() {
       "jwk",
       keyPair.publicKey
     );
+    // console.log("🚀 ~ generateKeyPair ~ publicKey:", publicKey);
 
     const privateKey = await window.crypto.subtle.exportKey(
       "jwk",
       keyPair.privateKey
     );
+    // console.log("🚀 ~ generateKeyPair ~ privateKey:", privateKey);
 
     return { publicKey, privateKey };
   }
@@ -41,11 +45,11 @@ export default function Redirect() {
     initialAcessToken: string,
     clientId: string
   ) {
-    console.log("🚀 ~ Redirect ~ initialAcessToken:", initialAcessToken);
+    // console.log("🚀 ~ Redirect ~ initialAcessToken:", initialAcessToken);
 
     const { publicKey, privateKey } = await generateKeyPair();
-    console.log("🚀 ~ Redirect ~ privateKey:", privateKey);
-    console.log("🚀 ~ Redirect ~ publicKey:", publicKey);
+    // console.log("🚀 ~ Redirect ~ privateKey:", privateKey);
+    // console.log("🚀 ~ Redirect ~ publicKey:", publicKey);
 
     const registrationResponse = await fetch(
       "https://fhir.epic.com/interconnect-fhir-oauth/oauth2/register",
@@ -63,26 +67,27 @@ export default function Redirect() {
         }),
       }
     );
+
     if (!registrationResponse.ok) {
       throw new Error("Failed to register dynamic client");
     }
 
     const registrationData = await registrationResponse.json();
-    console.log("🚀 ~ Redirect ~ registrationData:", registrationData);
+    // console.log("🚀 ~ Redirect ~ registrationData:", registrationData);
 
     return { registrationData, privateKey };
   }
 
   async function generateJWT(clientId: string, privateKey: JsonWebKey) {
-    console.log(
-      "in generateJWT. clientId: ",
-      clientId,
-      " privateKey: ",
-      privateKey
-    );
+    // console.log(
+    //   "in generateJWT. clientId: ",
+    //   clientId,
+    //   " privateKey: ",
+    //   privateKey
+    // );
 
     const now = Math.floor(Date.now() / 1000);
-    console.log("🚀 ~ generateJWT ~ now:", now);
+    // console.log("🚀 ~ generateJWT ~ now:", now);
 
     const payload = {
       sub: clientId,
@@ -93,14 +98,15 @@ export default function Redirect() {
       iat: now,
       iss: clientId,
     };
-    console.log("🚀 ~ generateJWT ~ payload:", payload);
+    // console.log("🚀 ~ generateJWT ~ payload:", payload);
 
     // Ensure the privateKey conforms to the JWK structure expected by jose
     const privateKeyJWK = privateKey as jose.JWK;
     const privateKeyObj = await jose.importJWK(privateKeyJWK, "RS256");
+    // console.log("🚀 ~ generateJWT ~ privateKeyObj:", privateKeyObj);
 
     const jwt = await new jose.SignJWT(payload)
-      .setProtectedHeader({ alg: "RS256" })
+      .setProtectedHeader({ alg: "RS256", typ: "JWT" })
       .sign(privateKeyObj);
 
     return jwt;
@@ -108,7 +114,7 @@ export default function Redirect() {
 
   async function getAccessToken(clientId: string, privateKey: JsonWebKey) {
     const jwt = await generateJWT(clientId, privateKey);
-    console.log("🚀 ~ getAccessToken ~ jwt:", jwt);
+    // console.log("🚀 ~ getAccessToken ~ jwt:", jwt);
 
     const tokenResponse = await fetch(
       "https://fhir.epic.com/interconnect-fhir-oauth/oauth2/token",
@@ -120,7 +126,7 @@ export default function Redirect() {
         body: new URLSearchParams({
           grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
           assertion: jwt,
-          client_id: clientId,
+          client_id: encodeURIComponent(clientId),
         }),
       }
     );
@@ -139,6 +145,12 @@ export default function Redirect() {
   }
 
   async function handleRedirectPage() {
+    // console.log(
+    //   "inside handle redirect. initialAccessToken: ",
+    //   initialAccessToken,
+    //   ". clientId: ",
+    //   clientId
+    // );
     try {
       const { registrationData, privateKey } = await registerDynamicClient(
         initialAccessToken,
@@ -162,17 +174,7 @@ export default function Redirect() {
     const code = searchParams.get("code");
     const state = searchParams.get("state");
 
-    const clientId = "ea9b08eb-030c-41e5-b24b-e4b95ce068e5";
-    const redirectUri = "http://localhost:3000/redirect";
-
-    if (code) {
-      console.log("code: ", code);
-    }
-
-    if (state) {
-      console.log("state: ", state);
-    }
-
+    // if code & state are in response proceed
     if (code && state) {
       const body = `grant_type=${encodeURIComponent(
         "authorization_code"
@@ -180,6 +182,7 @@ export default function Redirect() {
         redirectUri
       )}&client_id=${encodeURIComponent(clientId)}`;
 
+      // fetch iniial access token
       fetch("https://fhir.epic.com/interconnect-fhir-oauth/oauth2/token", {
         method: "POST",
         headers: {
@@ -189,28 +192,43 @@ export default function Redirect() {
       })
         .then((response) => {
           response.json().then((data) => {
-            if (!response.ok) {
-              console.error("Response Error Data: ", data);
-              throw new Error(`HTTP error! Status: ${response.status}`);
+            console.error("Response: ", data);
+            if (!data.access_token) {
+              throw new Error(`Failed to obtain initial access token`);
             }
 
-            initialAccessToken = data.access_token;
+            setInitialAccessToken(data.access_token);
+            // console.log("initialAccessToken: ", data.access_token);
 
-            console.log("initialAccessToken: ", initialAccessToken);
-            [];
+            // decode and inspect token
+            const decodedToken = jose.decodeJwt(data.access_token);
+            console.log("Decoded Token:", decodedToken);
+
+            // Check token expiry
+            const now = Math.floor(Date.now() / 1000);
+            if (decodedToken.exp && decodedToken.exp < now) {
+              throw new Error("Initial access token is expired");
+            }
+
+            // Verify token signature (optional, requires public key)
+            // const publicKey = await fetchPublicKey(); // Fetch the public key from your server or JWKS endpoint
+            // const verifiedToken = await jose.jwtVerify(data.access_token, publicKey);
+            // console.log("Verified Token:", verifiedToken);
+
+            return data.access_token;
           });
-        })
-        .then(() => {
-          handleRedirectPage();
-        })
-        .then((response) => {
-          console.log("response: ", response);
         })
         .catch((error) => {
           console.error("Error:", error);
         });
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (initialAccessToken) {
+      handleRedirectPage();
+    }
+  }, [initialAccessToken]);
 
   return (
     <div id="home" className=" w-full h-screen text-center bg-grad">

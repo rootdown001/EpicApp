@@ -43,9 +43,13 @@ export default function Main() {
 
   useEffect(() => {
     if (runAuth) {
-      const authUrl = `https://fhir.epic.com/interconnect-fhir-oauth/oauth2/authorize?response_type=${responseType}&client_id=${clientId}&redirect_uri=${redirectUri}&state=${myState}&aud=${myAud}&scope=${myScope}`;
-      // fetch(authUrl).then((res) => console.log(res));
-      window.location.href = authUrl;
+      try {
+        const authUrl = `https://fhir.epic.com/interconnect-fhir-oauth/oauth2/authorize?response_type=${responseType}&client_id=${clientId}&redirect_uri=${redirectUri}&state=${myState}&aud=${myAud}&scope=${myScope}`;
+        // fetch(authUrl).then((res) => console.log(res));
+        window.location.href = authUrl;
+      } catch (error) {
+        console.log(error);
+      }
     }
   }, [runAuth]);
 
