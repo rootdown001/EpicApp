@@ -162,6 +162,12 @@ export default function Redirect() {
   // FXN: getAccessToken()
   // called by handleRedirectPage()
   async function getAccessToken(clientId: string, privateKeyJwk: JsonWebKey) {
+    // obtain scope from env
+    const scope = process.env.NEXT_PUBLIC_SCOPE;
+
+    // run type guard function
+    checkEnvVariables(scope);
+
     const jwt = await generateJWT(clientId, privateKeyJwk);
     const grantType = "urn:ietf:params:oauth:grant-type:jwt-bearer";
 
@@ -169,6 +175,9 @@ export default function Redirect() {
       grant_type: grantType,
       assertion: jwt,
       client_id: clientId,
+      scope: scope as string,
+      // TODO: incorporated answer from code gpt
+      // TODO: should publicKeyJwt be in body?
     }).toString();
 
     // console.log("body: ", body);
