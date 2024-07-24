@@ -3,72 +3,73 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as jose from "jose";
-import FHIR from "fhirclient";
-import { error } from "console";
+import { checkEnvVariables } from "../utils/env";
 
 export default function Redirect() {
   const searchParams = useSearchParams();
   const [idToken, setIdToken] = useState("");
 
-  const clientId = process.env.NEXT_PUBLIC_REGISTERED_CLIENT_ID;
-  const redirectUri = process.env.NEXT_PUBLIC_REDIRECT_URI;
+  const clientIdEnv = process.env.NEXT_PUBLIC_REGISTERED_CLIENT_ID;
+  const redirectUriEnv = process.env.NEXT_PUBLIC_REDIRECT_URI;
 
-  // fetchIdToken
+  // FXN: fetchIdToken()
   // caled from useEffect when searchParams change
   async function fetchIdToken(code: string, state: string) {
-    if (clientId != undefined && redirectUri != undefined) {
-      const body = new URLSearchParams({
-        grant_type: "authorization_code",
-        code: code,
-        redirect_uri: redirectUri,
-        client_id: clientId,
-      }).toString();
+    // type check env variable
+    checkEnvVariables(clientIdEnv, redirectUriEnv);
 
-      try {
-        const response = await fetch(
-          "https://fhir.epic.com/interconnect-fhir-oauth/oauth2/token",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded",
-            },
-            body: body,
-          }
-        );
+    // asserting env variables "as string" bc passed type check
+    const body = new URLSearchParams({
+      grant_type: "authorization_code",
+      code: code,
+      redirect_uri: redirectUriEnv as string,
+      client_id: clientIdEnv as string,
+    }).toString();
 
-        if (!response.ok) {
-          const text = await response.text();
-          throw new Error(`Failed to obtain initial access token: ${text}`);
+    try {
+      const response = await fetch(
+        "https://fhir.epic.com/interconnect-fhir-oauth/oauth2/token",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: body,
         }
-
-        const data = await response.json();
-
-        if (!data.access_token) {
-          throw new Error(`Failed to obtain initial access token`);
-        }
-
-        setIdToken(data.access_token);
-        // console.log("Data:", data);
-
-        const decodedIdToken = jose.decodeJwt(data.access_token);
-        console.log("decodedIdToken:", decodedIdToken);
-
-        const now = Math.floor(Date.now() / 1000);
-        if (decodedIdToken.exp && decodedIdToken.exp < now) {
-          throw new Error("Initial access token is expired");
-        }
-
-        return data.access_token;
-      } catch (error) {
-        console.error("Error:", error);
-      }
-    } else {
-      throw new Error(
-        "clientId or redirectUri at fetchIdToken is undefined (from .env)"
       );
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`Failed to obtain initial access token: ${text}`);
+      }
+
+      const data = await response.json();
+
+      if (!data.access_token) {
+        throw new Error(`Failed to obtain initial access token`);
+      }
+
+      // TODO: setIdToken to data.id_token
+      // TODO: setIdToken to data
+      setIdToken(data.access_token);
+      console.log("Data:", data);
+      // console.log("data.access_token:", data.access_token);
+
+      const decodedIdToken = jose.decodeJwt(data.access_token);
+      console.log("decodedIdToken:", decodedIdToken);
+
+      const now = Math.floor(Date.now() / 1000);
+      if (decodedIdToken.exp && decodedIdToken.exp < now) {
+        throw new Error("Initial access token is expired");
+      }
+
+      return data.access_token;
+    } catch (error) {
+      console.error("Error:", error);
     }
   }
 
+  // FXN: generateKeyPair()
   // generate key pair with RSASSA-PKCS1-v1_5
   async function generateKeyPair() {
     const keyPair = await window.crypto.subtle.generateKey(
@@ -95,14 +96,16 @@ export default function Redirect() {
     return { publicKeyJwk, privateKeyJwk };
   }
 
-  // register dynamic client
+  // FXN: registerDynamicClient()
   // called by handle redirect page
   async function registerDynamicClient(
     initialAcessToken: string,
     clientId: string
   ) {
+    // get key pair in jwk format
     const { publicKeyJwk, privateKeyJwk } = await generateKeyPair();
 
+    // fetch register with software_id & public key
     const registrationResponse = await fetch(
       "https://fhir.epic.com/interconnect-fhir-oauth/oauth2/register",
       {
@@ -131,6 +134,7 @@ export default function Redirect() {
     return { registrationData, privateKeyJwk };
   }
 
+  // generate JWT bearer flow
   async function generateJWT(clientId: string, privateKeyJwk: JsonWebKey) {
     const now = Math.floor(Date.now() / 1000);
 
@@ -155,6 +159,8 @@ export default function Redirect() {
     return jwt;
   }
 
+  // FXN: getAccessToken()
+  // called by handleRedirectPage()
   async function getAccessToken(clientId: string, privateKeyJwk: JsonWebKey) {
     const jwt = await generateJWT(clientId, privateKeyJwk);
     const grantType = "urn:ietf:params:oauth:grant-type:jwt-bearer";
@@ -165,7 +171,7 @@ export default function Redirect() {
       client_id: clientId,
     }).toString();
 
-    console.log("body: ", body);
+    // console.log("body: ", body);
 
     const tokenResponse = await fetch(
       "https://fhir.epic.com/interconnect-fhir-oauth/oauth2/token",
@@ -196,24 +202,31 @@ export default function Redirect() {
   // handle redirect page
   // called by useEffect after initial access token
   async function handleRedirectPage() {
-    try {
-      const { registrationData, privateKeyJwk } = await registerDynamicClient(
-        idToken,
-        clientId
-      );
-      console.log("Dynamic client registered:", registrationData);
+    if (clientIdEnv != undefined) {
+      try {
+        const { registrationData, privateKeyJwk } = await registerDynamicClient(
+          idToken,
+          clientIdEnv
+        );
+        console.log("Dynamic client registered:", registrationData);
 
-      console.log("registration data clientId: ", registrationData.client_id);
+        console.log("registration data clientId: ", registrationData.client_id);
 
-      const accessToken = await getAccessToken(
-        registrationData.client_id,
-        privateKeyJwk
+        const accessToken = await getAccessToken(
+          registrationData.client_id,
+          privateKeyJwk
+        );
+      } catch (error) {
+        console.log("Error: ", error);
+      }
+    } else {
+      throw new Error(
+        "An env variable is undefined @ handleRedirectPage in redirect.tsx"
       );
-    } catch (error) {
-      console.log("Error: ", error);
     }
   }
 
+  // call fetchIdToken() when searchParams change (on redirect)
   useEffect(() => {
     const code = searchParams.get("code");
     const state = searchParams.get("state");
@@ -223,8 +236,11 @@ export default function Redirect() {
     }
   }, [searchParams]);
 
+  // call handleRedirectPage() when idToken loaded in state
   useEffect(() => {
+    console.log("idToken: ", idToken);
     if (idToken) {
+      console.log("idToken: ", idToken);
       handleRedirectPage();
     }
   }, [idToken]);
