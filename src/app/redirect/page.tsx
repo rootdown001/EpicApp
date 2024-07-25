@@ -83,10 +83,16 @@ export default function Redirect() {
       ["sign", "verify"]
     );
 
+    // TODO: tried to add kid to header of jwt and getAcceddToken
+    // TODO: error at 259 - i think kid string
+    // TODO: look to see which type publicKey obj has kid
+    // TODO: maybe kid in state
+
     const publicKeyJwk = await window.crypto.subtle.exportKey(
       "jwk",
       keyPair.publicKey
     );
+    console.log("🚀 ~ generateKeyPair ~ publicKeyJwk:", publicKeyJwk);
 
     const privateKeyJwk = await window.crypto.subtle.exportKey(
       "jwk",
@@ -131,11 +137,15 @@ export default function Redirect() {
 
     const registrationData = await registrationResponse.json();
 
-    return { registrationData, privateKeyJwk };
+    return { registrationData, privateKeyJwk, publicKeyJwk };
   }
 
   // generate JWT bearer flow
-  async function generateJWT(clientId: string, privateKeyJwk: JsonWebKey) {
+  async function generateJWT(
+    clientId: string,
+    privateKeyJwk: JsonWebKey,
+    publicKeyJwk: JsonWebKey
+  ) {
     const now = Math.floor(Date.now() / 1000);
 
     const payload = {
@@ -152,6 +162,11 @@ export default function Redirect() {
     const privateKeyJWK = privateKeyJwk as jose.JWK;
     const privateKeyObj = await jose.importJWK(privateKeyJWK, "RS256");
 
+    // Extract the kid (Key ID) from the publicKeyJwk
+    const publicKeyJose = publicKeyJwk as jose.JWK;
+
+    const kid = publicKeyJose.kid;
+
     const jwt = await new jose.SignJWT(payload)
       .setProtectedHeader({ alg: "RS256", typ: "JWT" })
       .sign(privateKeyObj);
@@ -161,15 +176,27 @@ export default function Redirect() {
 
   // FXN: getAccessToken()
   // called by handleRedirectPage()
-  async function getAccessToken(clientId: string, privateKeyJwk: JsonWebKey) {
+  async function getAccessToken(
+    clientId: string,
+    privateKeyJwk: JsonWebKey,
+    publicKeyJwk: JsonWebKey
+  ) {
     // obtain scope from env
     const scope = process.env.NEXT_PUBLIC_SCOPE;
 
     // run type guard function
     checkEnvVariables(scope);
 
-    const jwt = await generateJWT(clientId, privateKeyJwk);
+    // TODO: turn publicKeyJwk into jose.jwk
+    const publicKeyJose = publicKeyJwk as jose.JWK;
+    const kid = publicKeyJose.kid;
+    console.log("🚀 ~ Redirect ~ publicKeyJose: ", publicKeyJose);
+    console.log("🚀 ~ Redirect ~ kid:", kid);
+
+    const jwt = await generateJWT(clientId, privateKeyJwk, publicKeyJwk);
     const grantType = "urn:ietf:params:oauth:grant-type:jwt-bearer";
+
+    //
 
     const body = new URLSearchParams({
       grant_type: grantType,
@@ -178,6 +205,10 @@ export default function Redirect() {
       scope: scope as string,
       // TODO: incorporated answer from code gpt
       // TODO: should publicKeyJwt be in body?
+      // TODO: maybe "kid"
+      client_assertion: jwt,
+      client_assertion_type:
+        "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
     }).toString();
 
     // console.log("body: ", body);
@@ -188,6 +219,7 @@ export default function Redirect() {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
+          kid: kid as string,
         },
         body: body,
       }
@@ -213,17 +245,16 @@ export default function Redirect() {
   async function handleRedirectPage() {
     if (clientIdEnv != undefined) {
       try {
-        const { registrationData, privateKeyJwk } = await registerDynamicClient(
-          idToken,
-          clientIdEnv
-        );
+        const { registrationData, privateKeyJwk, publicKeyJwk } =
+          await registerDynamicClient(idToken, clientIdEnv);
         console.log("Dynamic client registered:", registrationData);
 
         console.log("registration data clientId: ", registrationData.client_id);
 
         const accessToken = await getAccessToken(
           registrationData.client_id,
-          privateKeyJwk
+          privateKeyJwk,
+          publicKeyJwk
         );
       } catch (error) {
         console.log("Error: ", error);
