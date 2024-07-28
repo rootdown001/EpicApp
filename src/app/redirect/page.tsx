@@ -49,14 +49,12 @@ export default function Redirect() {
         throw new Error(`Failed to obtain initial access token`);
       }
 
-      // TODO: setIdToken to data.id_token
-      // TODO: setIdToken to data
       setIdToken(data.access_token);
-      console.log("Data:", data);
+      // console.log("Data:", data);
       // console.log("data.access_token:", data.access_token);
 
       const decodedIdToken = jose.decodeJwt(data.access_token);
-      console.log("decodedIdToken:", decodedIdToken);
+      // console.log("decodedIdToken:", decodedIdToken);
 
       const now = Math.floor(Date.now() / 1000);
       if (decodedIdToken.exp && decodedIdToken.exp < now) {
@@ -83,23 +81,22 @@ export default function Redirect() {
       ["sign", "verify"]
     );
 
-    // TODO: tried to add kid to header of jwt and getAcceddToken
-    // TODO: error at 259 - i think kid string
-    // TODO: look to see which type publicKey obj has kid
-    // TODO: maybe kid in state
+    const kid = crypto.randomUUID(); // Generate a unique key ID
 
-    const publicKeyJwk = await window.crypto.subtle.exportKey(
+    const publicKeyJwk = (await window.crypto.subtle.exportKey(
       "jwk",
       keyPair.publicKey
-    );
-    console.log("🚀 ~ generateKeyPair ~ publicKeyJwk:", publicKeyJwk);
+    )) as JsonWebKey & { kid: string }; // Cast to include 'kid' property
+    publicKeyJwk.kid = kid; // Add the kid to the JWK
+
+    console.log("keyPair.publicKey: ", publicKeyJwk.kid);
 
     const privateKeyJwk = await window.crypto.subtle.exportKey(
       "jwk",
       keyPair.privateKey
     );
 
-    return { publicKeyJwk, privateKeyJwk };
+    return { publicKeyJwk, privateKeyJwk, kid };
   }
 
   // FXN: registerDynamicClient()
@@ -109,7 +106,7 @@ export default function Redirect() {
     clientId: string
   ) {
     // get key pair in jwk format
-    const { publicKeyJwk, privateKeyJwk } = await generateKeyPair();
+    const { publicKeyJwk, privateKeyJwk, kid } = await generateKeyPair();
 
     // fetch register with software_id & public key
     const registrationResponse = await fetch(
@@ -137,14 +134,15 @@ export default function Redirect() {
 
     const registrationData = await registrationResponse.json();
 
-    return { registrationData, privateKeyJwk, publicKeyJwk };
+    return { registrationData, privateKeyJwk, publicKeyJwk, kid };
   }
 
   // generate JWT bearer flow
   async function generateJWT(
     clientId: string,
     privateKeyJwk: JsonWebKey,
-    publicKeyJwk: JsonWebKey
+    publicKeyJwk: JsonWebKey,
+    kid: string
   ) {
     const now = Math.floor(Date.now() / 1000);
 
@@ -162,13 +160,8 @@ export default function Redirect() {
     const privateKeyJWK = privateKeyJwk as jose.JWK;
     const privateKeyObj = await jose.importJWK(privateKeyJWK, "RS256");
 
-    // Extract the kid (Key ID) from the publicKeyJwk
-    const publicKeyJose = publicKeyJwk as jose.JWK;
-
-    const kid = publicKeyJose.kid;
-
     const jwt = await new jose.SignJWT(payload)
-      .setProtectedHeader({ alg: "RS256", typ: "JWT" })
+      .setProtectedHeader({ alg: "RS256", typ: "JWT", kid: kid })
       .sign(privateKeyObj);
 
     return jwt;
@@ -179,7 +172,8 @@ export default function Redirect() {
   async function getAccessToken(
     clientId: string,
     privateKeyJwk: JsonWebKey,
-    publicKeyJwk: JsonWebKey
+    publicKeyJwk: JsonWebKey,
+    kid: string
   ) {
     // obtain scope from env
     const scope = process.env.NEXT_PUBLIC_SCOPE;
@@ -187,29 +181,29 @@ export default function Redirect() {
     // run type guard function
     checkEnvVariables(scope);
 
-    // TODO: turn publicKeyJwk into jose.jwk
-    const publicKeyJose = publicKeyJwk as jose.JWK;
-    const kid = publicKeyJose.kid;
-    console.log("🚀 ~ Redirect ~ publicKeyJose: ", publicKeyJose);
-    console.log("🚀 ~ Redirect ~ kid:", kid);
-
-    const jwt = await generateJWT(clientId, privateKeyJwk, publicKeyJwk);
+    const jwt = await generateJWT(clientId, privateKeyJwk, publicKeyJwk, kid);
     const grantType = "urn:ietf:params:oauth:grant-type:jwt-bearer";
 
-    //
-
+    // jwt bearer flow
     const body = new URLSearchParams({
       grant_type: grantType,
       assertion: jwt,
       client_id: clientId,
       scope: scope as string,
-      // TODO: incorporated answer from code gpt
-      // TODO: should publicKeyJwt be in body?
-      // TODO: maybe "kid"
-      client_assertion: jwt,
-      client_assertion_type:
-        "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
     }).toString();
+
+    // refresh token
+
+    // const body = new URLSearchParams({
+    //   grant_type: "authorization_code",
+    //   // assertion: jwt,
+    //   client_id: clientId,
+    //   scope: scope as string,
+    //   // kid: kid,
+    //   client_assertion: jwt,
+    //   client_assertion_type:
+    //     "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+    // }).toString();
 
     // console.log("body: ", body);
 
@@ -219,7 +213,6 @@ export default function Redirect() {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
-          kid: kid as string,
         },
         body: body,
       }
@@ -245,7 +238,7 @@ export default function Redirect() {
   async function handleRedirectPage() {
     if (clientIdEnv != undefined) {
       try {
-        const { registrationData, privateKeyJwk, publicKeyJwk } =
+        const { registrationData, privateKeyJwk, publicKeyJwk, kid } =
           await registerDynamicClient(idToken, clientIdEnv);
         console.log("Dynamic client registered:", registrationData);
 
@@ -254,7 +247,8 @@ export default function Redirect() {
         const accessToken = await getAccessToken(
           registrationData.client_id,
           privateKeyJwk,
-          publicKeyJwk
+          publicKeyJwk,
+          kid
         );
       } catch (error) {
         console.log("Error: ", error);
