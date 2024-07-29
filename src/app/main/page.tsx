@@ -2,9 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+
 import { AiOutlineMail } from "react-icons/ai";
 import { BsFillPersonLinesFill } from "react-icons/bs";
 import { FaDev, FaGithub, FaLinkedinIn, FaXTwitter } from "react-icons/fa6";
+import { checkEnvVariables } from "../utils/env";
+import { useSearchParams } from "next/navigation";
+import { useMetadata } from "../context/MetadataContext";
+
 // import * as dotenv from "dotenv";
 
 export default function Main() {
@@ -18,6 +23,8 @@ export default function Main() {
 
   // hooks
   const [runAuth, setRunAuth] = useState(false);
+  const searchParams = useSearchParams();
+  const { metadata, setMetadata } = useMetadata();
 
   // env variables
   const clientIdEnv = process.env.NEXT_PUBLIC_REGISTERED_CLIENT_ID;
@@ -26,45 +33,97 @@ export default function Main() {
   const scopeEnv = process.env.NEXT_PUBLIC_SCOPE;
   // TODO: figure out my state
   const stateEnv = process.env.NEXT_PUBLIC_STATE;
-  const baseUrlEnv = process.env.NEXT_PUBLIC_BASE_URL;
-  const authUrlEnv = process.env.NEXT_PUBLIC_AUTHORIZE_URL;
+  // const baseUrlEnv = process.env.NEXT_PUBLIC_BASE_URL;
+  // const authUrlEnv = process.env.NEXT_PUBLIC_AUTHORIZE_URL;
+
+  // check that env variables not undefined
+  checkEnvVariables(
+    clientIdEnv,
+    redirectUriEnv,
+    responseTypeEnv,
+    scopeEnv,
+    stateEnv
+  );
+
+  // step 1: get iss & launch
+  const launch = searchParams.get("launch");
+  console.log("🚀 ~ Main ~ launch:", launch);
+  const iss = searchParams.get("iss");
+  console.log("🚀 ~ Main ~ iss:", iss);
+
+  // Step 2: Retrieve the Conformance Statement or SMART Configuration
+  async function fetchMetadata(iss: string) {
+    try {
+      const response = await fetch(`${iss}/.well-known/smart-configuration`, {
+        headers: {
+          Accept: "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch metadata: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log("🚀 ~ fetchMetadata ~ data:", data);
+      setMetadata(data);
+    } catch (error) {
+      console.error("Error fetching metadata:", error);
+    }
+  }
+
+  // Step 3: Request an Authorization Code
+  async function requestAuthorizationCode() {
+    if (!metadata) return;
+
+    const authorizeUrl = new URL(metadata.authorization_endpoint);
+    authorizeUrl.searchParams.append(
+      "response_type",
+      responseTypeEnv as string
+    );
+    authorizeUrl.searchParams.append("client_id", clientIdEnv as string);
+    authorizeUrl.searchParams.append("redirect_uri", redirectUriEnv as string);
+    authorizeUrl.searchParams.append("scope", scopeEnv as string);
+    authorizeUrl.searchParams.append("launch", launch as string);
+    authorizeUrl.searchParams.append("state", stateEnv as string);
+    authorizeUrl.searchParams.append("aud", iss as string);
+
+    window.location.href = authorizeUrl.toString();
+  }
 
   // run auth
   useEffect(() => {
     // runAuth true with button click
-    if (runAuth) {
-      // are env variables loaded
-      if (
-        clientIdEnv != undefined &&
-        redirectUriEnv != undefined &&
-        responseTypeEnv != undefined &&
-        scopeEnv != undefined &&
-        stateEnv != undefined &&
-        baseUrlEnv != undefined &&
-        authUrlEnv != undefined
-      ) {
-        const query = new URLSearchParams({
-          response_type: responseTypeEnv,
-          client_id: clientIdEnv,
-          redirect_uri: redirectUriEnv,
-          scope: scopeEnv,
-          state: stateEnv,
-          aud: baseUrlEnv,
-        }).toString();
+    // if (runAuth) {
+    //   // are env variables loaded
 
-        try {
-          const authUrl = `${authUrlEnv}?${query}`;
-          window.location.href = authUrl;
-        } catch (error) {
-          console.log(error);
-        }
-      } else {
-        throw new Error(
-          "An env variable is undefined at useEffect in main.tsx"
-        );
-      }
+    if (iss) {
+      fetchMetadata(iss);
     }
-  }, [runAuth]);
+
+    // const query = new URLSearchParams({
+    //   response_type: responseTypeEnv,
+    //   client_id: clientIdEnv,
+    //   redirect_uri: redirectUriEnv,
+    //   scope: scopeEnv,
+    //   state: stateEnv,
+    //   aud: baseUrlEnv,
+    // }).toString();
+
+    // try {
+    //   const authUrl = `${authUrlEnv}?${query}`;
+    //   window.location.href = authUrl;
+    // } catch (error) {
+    //   console.log(error);
+    // }
+    // }
+  }, [iss]);
+
+  useEffect(() => {
+    if (metadata && launch) {
+      requestAuthorizationCode();
+    }
+  }, [metadata, launch]);
 
   return (
     <div id="home" className=" w-full h-screen text-center bg-grad">
