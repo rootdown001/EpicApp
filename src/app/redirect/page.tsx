@@ -1,15 +1,14 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { checkEnvVariables } from "../utils/env";
-import { useMetadata } from "../context/MetadataContext";
+import { Metadata } from "../main/page";
 
 export default function Redirect() {
   const searchParams = useSearchParams();
   const [accessToken, setAccessToken] = useState<string | null>(null);
-  const router = useRouter();
-  const { metadata } = useMetadata();
+  const [metadata, setMetadata] = useState<Metadata | null>(null);
 
   const clientIdEnv = process.env.NEXT_PUBLIC_REGISTERED_CLIENT_ID;
   const redirectUriEnv = process.env.NEXT_PUBLIC_REDIRECT_URI;
@@ -19,6 +18,10 @@ export default function Redirect() {
   // Step 5: Exchange the Authorization Code for an Access Token
   async function fetchAccessToken(code: string) {
     checkEnvVariables(clientIdEnv, redirectUriEnv);
+
+    if (!metadata || !metadata.token_endpoint) {
+      throw new Error("Metadata or token endpoint is not defined");
+    }
 
     const body = new URLSearchParams({
       grant_type: "authorization_code",
@@ -54,7 +57,18 @@ export default function Redirect() {
   }
 
   useEffect(() => {
+    const storedMetadata = localStorage.getItem("metadata");
+    if (storedMetadata) {
+      setMetadata(JSON.parse(storedMetadata));
+    }
+  }, []);
+
+  useEffect(() => {
     const code = searchParams.get("code");
-    console.log("🚀 ~ useEffect ~ code:", code);
-  }, [searchParams]);
+    // console.log("🚀 ~ useEffect ~ code:", code);
+    if (metadata && code) {
+      //   console.log("Metadata in redirect: ", metadata);
+      // TODO: call fetchAccessToken
+    }
+  }, [searchParams, metadata]);
 }

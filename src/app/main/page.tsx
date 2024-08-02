@@ -8,9 +8,12 @@ import { BsFillPersonLinesFill } from "react-icons/bs";
 import { FaDev, FaGithub, FaLinkedinIn, FaXTwitter } from "react-icons/fa6";
 import { checkEnvVariables } from "../utils/env";
 import { useSearchParams } from "next/navigation";
-import { useMetadata } from "../context/MetadataContext";
 
 // import * as dotenv from "dotenv";
+
+export interface Metadata {
+  [key: string]: any;
+}
 
 export default function Main() {
   const colors = {
@@ -24,7 +27,7 @@ export default function Main() {
   // hooks
   const [runAuth, setRunAuth] = useState(false);
   const searchParams = useSearchParams();
-  const { metadata, setMetadata } = useMetadata();
+  const [metadata, setMetadata] = useState<Metadata | null>(null);
 
   // env variables
   const clientIdEnv = process.env.NEXT_PUBLIC_REGISTERED_CLIENT_ID;
@@ -47,9 +50,9 @@ export default function Main() {
 
   // step 1: get iss & launch
   const launch = searchParams.get("launch");
-  console.log("🚀 ~ Main ~ launch:", launch);
+  // console.log("🚀 ~ Main ~ launch:", launch);
   const iss = searchParams.get("iss");
-  console.log("🚀 ~ Main ~ iss:", iss);
+  // console.log("🚀 ~ Main ~ iss:", iss);
 
   // Step 2: Retrieve the Conformance Statement or SMART Configuration
   async function fetchMetadata(iss: string) {
@@ -65,8 +68,9 @@ export default function Main() {
       }
 
       const data = await response.json();
-      console.log("🚀 ~ fetchMetadata ~ data:", data);
+      // console.log("🚀 ~ fetchMetadata ~ data:", data);
       setMetadata(data);
+      localStorage.setItem("metadata", JSON.stringify(data)); // Store metadata in local storage
     } catch (error) {
       console.error("Error fetching metadata:", error);
     }
@@ -93,7 +97,7 @@ export default function Main() {
 
   // run auth
   useEffect(() => {
-    // runAuth true with button click
+    // // runAuth true with button click
     // if (runAuth) {
     //   // are env variables loaded
 
@@ -121,6 +125,9 @@ export default function Main() {
 
   useEffect(() => {
     if (metadata && launch) {
+      // console.log("🚀 ~ useEffect ~ launch:", launch);
+      // console.log("🚀 ~ useEffect ~ metadata:", metadata);
+
       requestAuthorizationCode();
     }
   }, [metadata, launch]);
