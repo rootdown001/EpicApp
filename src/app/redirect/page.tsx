@@ -3,72 +3,105 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { checkEnvVariables } from "../utils/env";
-import { Metadata } from "../main/page";
+import { Metadata } from "../launch/page";
+import FHIR from "fhirclient";
+import { oauth2 as SMART } from "fhirclient";
 
 export default function Redirect() {
-  const searchParams = useSearchParams();
-  const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [metadata, setMetadata] = useState<Metadata | null>(null);
-
+  const baseUriEnv = process.env.NEXT_PUBLIC_BASE_URL;
   const clientIdEnv = process.env.NEXT_PUBLIC_REGISTERED_CLIENT_ID;
   const redirectUriEnv = process.env.NEXT_PUBLIC_REDIRECT_URI;
 
-  checkEnvVariables(clientIdEnv, redirectUriEnv);
+  //   const abortController = new AbortController();
+  //   const signal = abortController.signal;
 
-  // Step 5: Exchange the Authorization Code for an Access Token
-  async function fetchAccessToken(code: string) {
-    checkEnvVariables(clientIdEnv, redirectUriEnv);
+  const [appClient, setAppClient] = useState<any>(null);
+  const [patientData, setPatientData] = useState<any>(null);
+  const [patientId, setPatientId] = useState<any>(null);
+  const [allergyIntoleranceData, setAllergyIntoleranceData] =
+    useState<any>(null);
 
-    if (!metadata || !metadata.token_endpoint) {
-      throw new Error("Metadata or token endpoint is not defined");
-    }
+  // checkEnvVariables(clientIdEnv, redirectUriEnv, baseUriEnv);
 
-    const body = new URLSearchParams({
-      grant_type: "authorization_code",
-      code: code,
-      redirect_uri: redirectUriEnv as string,
-      client_id: clientIdEnv as string,
-    }).toString();
+  async function getPatientData() {
+    const tempPatientData = await appClient.patient.read();
+    console.log("🚀 ~ getDashboard ~ tempPatientData:", tempPatientData);
 
+    setPatientData(tempPatientData);
+  }
+
+  async function getAllergyIntolerance() {
     try {
-      const response = await fetch(metadata.token_endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: body,
-      });
+      const response = await appClient.request(
+        `AllergyIntolerance?patient=${patientId}`,
+        {
+          pageLimit: 0, // to fetch all pages
+          flat: true, // to get a flat array of results
+        }
+      );
+      console.log("🚀 ~ getAllergyIntolerance ~ response:", response);
 
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(`Failed to obtain access token: ${text}`);
-      }
+      const allergyIntData = response;
 
-      const data = await response.json();
-
-      if (!data.access_token) {
-        throw new Error("Failed to obtain access token");
-      }
-
-      setAccessToken(data.access_token);
+      setAllergyIntoleranceData(allergyIntData);
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Error fetching AllergyIntolerance data:", error);
     }
   }
 
   useEffect(() => {
-    const storedMetadata = localStorage.getItem("metadata");
-    if (storedMetadata) {
-      setMetadata(JSON.parse(storedMetadata));
-    }
+    FHIR.oauth2
+      .ready()
+      .then((client) => {
+        console.log("my client: ", client);
+        setAppClient(client);
+        setPatientId(client.patient.id);
+      })
+      .catch(console.error);
   }, []);
 
   useEffect(() => {
-    const code = searchParams.get("code");
-    // console.log("🚀 ~ useEffect ~ code:", code);
-    if (metadata && code) {
-      //   console.log("Metadata in redirect: ", metadata);
-      // TODO: call fetchAccessToken
+    if (appClient) {
+      getPatientData();
+      getAllergyIntolerance();
     }
-  }, [searchParams, metadata]);
+  }, [appClient]);
+
+  // TODO: see how app works now - added patient and allergyintolerance search - trying to get AllergyIntolerance to work
+
+  return (
+    <div className="min-h-screen bg-gray-100 p-4">
+      <h1 className="text-3xl font-bold mb-4">Dashboard</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="bg-white p-4 rounded-lg shadow-md">
+          <h2 className="text-xl font-semibold mb-2">Patient Data</h2>
+          {patientData ? (
+            <div>
+              <p>
+                <strong>Name:</strong> {patientData.name?.[0]?.text}
+              </p>
+              <p>
+                <strong>Gender:</strong> {patientData.gender}
+              </p>
+              <p>
+                <strong>Birth Date:</strong> {patientData.birthDate}
+              </p>
+              {/* Add more patient details as needed */}
+            </div>
+          ) : (
+            <p>Loading...</p>
+          )}
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow-md">
+          <h2 className="text-xl font-semibold mb-2">Allergy Intolerance</h2>
+          {allergyIntoleranceData ? (
+            <div>{/* Render allergy intolerance data here */}</div>
+          ) : (
+            <p>Loading...</p>
+          )}
+        </div>
+        {/* Add more sections as needed */}
+      </div>
+    </div>
+  );
 }
