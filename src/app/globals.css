@@ -68,8 +68,7 @@ html {
 .bg-grad {
   background-image: linear-gradient(
     to right top,
-    #212a31,
-    #232d34,
+    #bb2a26 rgb(165, 54, 81),
     #262f38,
     #28323b,
     #2b353f,
@@ -81,4 +80,12 @@ html {
     #1d4a60,
     #124e66
   );
+}
+
+/* .bg-grad {
+  background-color: lightgrey;
+} */
+
+.icon-bg-red {
+  background-color: rgba(187, 42, 38, 0.8);
 }

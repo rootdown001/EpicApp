@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import navLogo from "/public/assets/EpicCare.png";
+import navLogo from "/public/assets/BAYBERRY1.png";
 import Link from "next/link";
 import { AiOutlineClose, AiOutlineMail, AiOutlineMenu } from "react-icons/ai";
 import { FaDev, FaGithub, FaLinkedinIn, FaXTwitter } from "react-icons/fa6";
@@ -13,7 +13,8 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [nav, setNav] = useState(false);
   // const [shadow, setShadow] = useState(false);
-  const [navBg, setNavBg] = useState("#D3D9D4");
+  // const [navBg, setNavBg] = useState("#D3D9D4");
+  const [navBg, setNavBg] = useState("rgba(187, 42, 38, 0.3)");
   const [linkColor, setLinkColor] = useState("#1f2937");
   // const [inProject, setInProject] = useState(false);
   // const router = useRouter();
@@ -77,15 +78,16 @@ export default function Navbar() {
 
   return (
     <div
-      style={{ background: `${navBg}` }}
+      style={{ background: `#FFFFFF` }}
       className={"fixed w-full  h-20 opacity-100"}
+
       // className={
       //   !isScrolled
       //     ? "fixed w-full  h-20 shadow-xl opacity-0"
       //     : "fixed w-full  h-20 opacity-100"
       // }
     >
-      <div className="flex justify-between items-center w-full h-full px-2 2xl:px-16">
+      <div className="flex justify-between items-center w-full h-full px-4 2xl:px-16">
         <Link href="/">
           <Image src={navLogo} alt="/" priority width={180} />
         </Link>

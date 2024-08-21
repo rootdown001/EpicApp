@@ -39,7 +39,14 @@ export default function Redirect() {
           flat: true, // to get a flat array of results
         }
       );
-      console.log("🚀 ~ getAllergyIntolerance ~ response:", response);
+
+      response.map((entry: any, index: number) => {
+        entry.code.coding.map((allergy: any, index: number) => {
+          console.log(`Allergy (array # ${index})`, allergy.display);
+        });
+
+        console.log(`Allergy entry (array # ${index})`, entry);
+      });
 
       const allergyIntData = response;
 
@@ -72,7 +79,7 @@ export default function Redirect() {
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       <h1 className="text-3xl font-bold mb-4">Dashboard</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-10">
         <div className="bg-white p-4 rounded-lg shadow-md">
           <h2 className="text-xl font-semibold mb-2">Patient Data</h2>
           {patientData ? (
@@ -86,16 +93,43 @@ export default function Redirect() {
               <p>
                 <strong>Birth Date:</strong> {patientData.birthDate}
               </p>
-              {/* Add more patient details as needed */}
+              <p>
+                <strong>Marital Status:</strong>{" "}
+                {patientData.maritalStatus.text}
+              </p>
+              <p>
+                <strong>Languages:</strong>{" "}
+                {patientData.communication.map((entry: any) => {
+                  return entry.language.text;
+                })}
+              </p>
             </div>
           ) : (
             <p>Loading...</p>
           )}
         </div>
         <div className="bg-white p-4 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-2">Allergy Intolerance</h2>
-          {allergyIntoleranceData ? (
-            <div>{/* Render allergy intolerance data here */}</div>
+          <h2 className="text-xl font-semibold mb-2">Contact Information</h2>
+          {patientData ? (
+            <div>
+              <p>
+                <strong>Street:</strong> {patientData.address?.[0]?.line?.[0]}
+              </p>
+              <p>
+                <strong>City, State:</strong>{" "}
+                {`${patientData.address?.[0]?.city}, ${patientData.address?.[0]?.state}`}
+              </p>
+              <p>
+                <strong>Postal Code:</strong>{" "}
+                {patientData.address?.[0]?.postalCode}
+              </p>
+              <p>
+                <strong>Phone:</strong> {patientData.telecom?.[0]?.value}
+              </p>
+              <p>
+                <strong>Email:</strong> {patientData.telecom?.[1]?.value}
+              </p>
+            </div>
           ) : (
             <p>Loading...</p>
           )}
