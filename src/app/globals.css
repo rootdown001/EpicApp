@@ -89,3 +89,31 @@ html {
 .icon-bg-red {
   background-color: rgba(187, 42, 38, 0.8);
 }
+
+.custom-grid {
+  grid-template-columns: max-content 1fr;
+  column-gap: 14px; /* Adjust this value to control the space between columns */
+}
+
+.details-link-button {
+  display: flex;
+  justify-content: flex-end;
+  padding-right: 10px; /* Adjust the padding as needed */
+}
+
+.btn {
+  text-decoration: none;
+  color: hsl(200, 20%, 95%);
+  background: hsl(210, 13%, 53%);
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.3rem;
+  border: none;
+  font-size: inherit;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.btn:hover,
+.btn:focus {
+  background: hsl(209, 24%, 47%);
+}
