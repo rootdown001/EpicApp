@@ -79,7 +79,7 @@ export default function Navbar() {
   return (
     <div
       style={{ background: `#FFFFFF` }}
-      className={"fixed w-full  h-20 opacity-100"}
+      className={"fixed w-full z-50 bg-white shadow-md h-20 opacity-100"}
 
       // className={
       //   !isScrolled
