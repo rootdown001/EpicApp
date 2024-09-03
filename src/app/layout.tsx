@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Navbar from "./components/Navbar";
+import { alata } from "./fonts";
+import NavbarLaunch from "./components/NavbarLaunch";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
@@ -14,9 +15,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${alata.variable}`}>
       <body suppressHydrationWarning={true}>
-        <Navbar />
+        <NavbarLaunch />
         {children}
         <SpeedInsights />
       </body>

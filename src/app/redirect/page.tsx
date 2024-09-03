@@ -28,6 +28,7 @@ export default function Redirect() {
   const [observationData, setObservationData] = useState<any>(null);
   const [specimenData, setSpecimenData] = useState<any>(null);
   const [familyMemberData, setFamilyMemberData] = useState<any>(null);
+  const [encounterData, setEncounterData] = useState<any>(null);
   // checkEnvVariables(clientIdEnv, redirectUriEnv, baseUriEnv);
 
   async function getPatientData() {
@@ -212,6 +213,25 @@ export default function Redirect() {
     }
   }
 
+  async function getEncounters() {
+    try {
+      const response = await appClient.request(
+        `Encounter?patient=${patientId}`,
+        {
+          pageLimit: 0,
+          flat: true,
+        }
+      );
+
+      const tempEncounterData = response;
+      console.log("🚀 ~ getEncounters ~ response:", response);
+
+      setEncounterData(tempEncounterData);
+    } catch (error) {
+      console.error("Error fetching Encounter data:", error);
+    }
+  }
+
   useEffect(() => {
     FHIR.oauth2
       .ready()
@@ -233,6 +253,7 @@ export default function Redirect() {
       getDiagnosticReport();
       getObservations();
       getSpecimens();
+      getEncounters();
     }
   }, [appClient]);
 
@@ -483,6 +504,32 @@ export default function Redirect() {
             <div>
               {specimenData.map((entry: any, index: number) => (
                 <p key={index}>{entry?.type?.text}</p>
+              ))}
+            </div>
+          ) : (
+            <p>Loading...</p>
+          )}
+        </div>
+        {/* Encounters 
+        <p key={index}>{entry?.type?.text}</p>
+        */}
+        <div className="bg-white p-4 rounded-lg shadow-md">
+          <div className="grid grid-cols-2">
+            <h2 className="text-xl font-semibold mb-2">Encounters</h2>
+            <div className="details-link-button">
+              <Link className="btn" href={"/details/encounters"}>
+                Details
+              </Link>
+            </div>
+          </div>
+          {encounterData ? (
+            <div>
+              {encounterData.map((entry: any, index: number) => (
+                <div key={index}>
+                  {entry?.type.map((type: any, typeIndex: number) => (
+                    <span key={typeIndex}>{type.text}</span>
+                  ))}
+                </div>
               ))}
             </div>
           ) : (

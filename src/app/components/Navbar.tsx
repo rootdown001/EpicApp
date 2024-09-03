@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import navLogo from "/public/assets/BAYBERRY1.png";
+import navLogo from "/public/assets/BAYBERRY3.png";
 import Link from "next/link";
 import { AiOutlineClose, AiOutlineMail, AiOutlineMenu } from "react-icons/ai";
 import { FaDev, FaGithub, FaLinkedinIn, FaXTwitter } from "react-icons/fa6";

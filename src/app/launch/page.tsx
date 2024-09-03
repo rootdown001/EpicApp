@@ -2,13 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-
-import { AiOutlineMail } from "react-icons/ai";
-import { BsFillPersonLinesFill } from "react-icons/bs";
-import { FaDev, FaGithub, FaLinkedinIn, FaXTwitter } from "react-icons/fa6";
 import { checkEnvVariables } from "../utils/env";
 import { useSearchParams } from "next/navigation";
+// import { Alata } from "next/font/google";
 import FHIR from "fhirclient";
+import AuthorizeButton from "../components/buttons/AuthorizeButton";
 
 // import * as dotenv from "dotenv";
 
@@ -57,49 +55,30 @@ export default function Launch() {
     }
   }, [runAuth]);
 
+  const handleAuthorizeClick = () => {
+    setRunAuth(true);
+  };
+
   return (
-    <div id="home" className=" w-full h-screen text-center bg-grad">
-      <div className=" max-w-[1240px] w-full h-full mx-auto p-2 flex justify-center items-center">
-        <div>
-          <div className="mb-3">
-            <button
-              className=" rounded-md bg-[#748D92] text-white px-2 py-1"
-              onClick={() => setRunAuth(true)}
-            >
-              Authorize Start of EPIC Access
-            </button>
-          </div>
-          <div className="mb-3"></div>
-          <div className="flex items-center justify-between w-[440px] m-auto py-4 px-4">
-            <div className="rounded-full icon-bg-red shadow-lg shadow-black/50 p-4 cursor-pointer hover:scale-110 ease-in duration-300">
-              <Link href="https://www.linkedin.com/in/nwpgpc/" target="_blank">
-                <FaLinkedinIn color="#FFFFFF" />
-              </Link>
+    <div className="flex flex-col items-center self-center px-20  w-full rounded-none max-w-[1070px] max-md:px-5 max-md:pt-24 max-md:max-w-full">
+      <div className="bg-grad bottom-right-radius rectangle">
+        <h1 className=" text-center text-white text-[64px] font-normal pt-16 centered-heading max-md:max-w-full ">
+          Hospice AI Chart Review and Medicare Coder
+        </h1>
+        <h2 className="mt-16 text-4xl font-medium text-center text-white max-md:mt-10 max-md:max-w-full">
+          Seamlessly Integrate Your EPIC Medical Records
+        </h2>
+        <div className=" mt-16 max-w-full ">
+          <div className="flex gap-5 flex-row w-full">
+            <div className="flex flex-col flex-[4]">
+              <p className="text-xl font-medium pl-[100px] text-white  ">
+                Click "Authorize" to link your provider account and streamline
+                the process of identifying hospice-eligible patients while
+                ensuring accurate Medicare coding and reimbursement.
+              </p>
             </div>
-            <div className="rounded-full icon-bg-red shadow-lg shadow-black/50 p-4 cursor-pointer hover:scale-110 ease-in duration-300">
-              <Link href="https://github.com/rootdown001" target="_blank">
-                <FaGithub color="#FFFFFF" />
-              </Link>
-            </div>
-
-            <div className="rounded-full icon-bg-red shadow-lg shadow-black/50 p-4 cursor-pointer hover:scale-110 ease-in duration-300">
-              <Link href="https://dev.to/rootdown001" target="_blank">
-                <FaDev color="#FFFFFF" />
-              </Link>
-            </div>
-            <div className="rounded-full icon-bg-red shadow-lg shadow-black/50 p-4 cursor-pointer hover:scale-110 ease-in duration-300">
-              <Link href="https://twitter.com/rootdown001" target="_blank">
-                <FaXTwitter color="#FFFFFF" />
-              </Link>
-            </div>
-
-            <div className="rounded-full icon-bg-red shadow-lg shadow-black/50 p-4 cursor-pointer hover:scale-110 ease-in duration-300">
-              <AiOutlineMail color="#FFFFFF" />
-            </div>
-            <div className="rounded-full icon-bg-red shadow-lg shadow-black/50 p-4 cursor-pointer hover:scale-110 ease-in duration-300">
-              <Link href="/#contact">
-                <BsFillPersonLinesFill color="#FFFFFF" />
-              </Link>
+            <div className="flex flex-col flex-[3] items-start pl-10">
+              <AuthorizeButton onClick={handleAuthorizeClick} />
             </div>
           </div>
         </div>
