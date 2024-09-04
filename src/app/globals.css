@@ -59,13 +59,23 @@ html {
   animation: bounce 5s ease infinite;
 }
 .bg-grad {
+  background: rgb(30, 30, 30);
+  background: radial-gradient(
+    circle,
+    rgba(30, 30, 30, 0.4) 0%,
+    rgba(30, 30, 30, 0.5) 52%,
+    rgba(30, 30, 30, 0.6) 100%
+  );
+}
+
+/* .bg-grad {
   background-image: linear-gradient(
     to right,
     hsla(60, 2%, 36%, 1),
     hsla(45, 8%, 72%, 1),
     hsla(51, 23%, 88%, 1)
   );
-}
+} */
 
 /* .bg-grad {
   background-color: lightgrey;
@@ -116,8 +126,8 @@ html {
 }
 
 .centered-heading {
-  padding-left: 160px; /* Adjust this value as needed */
-  padding-right: 160px; /* Adjust this value as needed */
+  padding-left: 140px; /* Adjust this value as needed */
+  padding-right: 140px; /* Adjust this value as needed */
 }
 
 .authorize-text {
