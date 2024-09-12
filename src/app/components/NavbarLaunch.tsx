@@ -1,11 +1,11 @@
 import React from "react";
-import navLogo from "/public/assets/hospice-ai-chart.png";
+import navLogo from "/public/assets/hospice-ai3.png";
 import Image from "next/image";
 import Link from "next/link";
 
 const NavbarLaunch: React.FC = () => {
   return (
-    <header className="flex overflow-hidden flex-wrap gap-5 justify-between py-3 w-full text-xl pl-20 font-semibold tracking-tight leading-none text-[#bb2a26] bg-white bg-blend-normal max-md:px-5 max-md:max-w-full">
+    <header className="flex overflow-hidden flex-wrap gap-10 px-20 justify-between py-8 w-full text-3xl pl-24 font-semibold leading-none text-[#ffffff] bg-[#348395] ">
       {/* <img
         loading="lazy"
         src="https://cdn.builder.io/api/v1/image/assets/TEMP/aba947d407b443002dee2c9ad79e421ce2846f852d0897358bbccabbfd7a804a?placeholderIfAbsent=true&apiKey=f9f522b90c2147cfa2ae6f16c245e771"
@@ -15,14 +15,14 @@ const NavbarLaunch: React.FC = () => {
       <Link href="/">
         <Image
           src={navLogo}
-          className="my-auto pt-4"
+          className="my-auto"
           alt="Hospice AI Logo"
           priority
-          width={300}
+          width={180}
         />
       </Link>
-      <nav className="my-auto mr-36 pt-10">
-        <a href="#learn-more" className="text-xl text-[#333d55]">
+      <nav className="my-auto mr-1">
+        <a href="#learn-more" className="text-xl text-[#ffffff]">
           Learn More
         </a>
       </nav>

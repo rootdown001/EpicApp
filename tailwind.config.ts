@@ -17,7 +17,8 @@ const config: Config = {
           "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
       },
       fontFamily: {
-        sans: ["var(--font-alata)"],
+        // sans: ["var(--font-alata)"],
+        sans: ["var(--font-montserrat)"],
       },
     },
   },

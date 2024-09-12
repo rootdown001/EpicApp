@@ -1,4 +1,4 @@
-import { Inter, Alata } from "next/font/google";
+import { Inter, Alata, Montserrat } from "next/font/google";
 
 export const inter = Inter({
   subsets: ["latin"],
@@ -10,4 +10,10 @@ export const alata = Alata({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-alata",
+});
+
+export const montserrat = Montserrat({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-montserrat",
 });

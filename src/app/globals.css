@@ -58,22 +58,23 @@ html {
 .animate-bounce1 {
   animation: bounce 5s ease infinite;
 }
-.bg-grad {
+/* .bg-grad {
   background: rgb(30, 30, 30);
   background: radial-gradient(
     circle,
-    rgba(30, 30, 30, 0.4) 0%,
-    rgba(30, 30, 30, 0.5) 52%,
+    rgba(30, 30, 30, 0.3) 0%,
+    rgba(30, 30, 30, 0.4) 50%,
     rgba(30, 30, 30, 0.6) 100%
   );
-}
+} */
 
 /* .bg-grad {
   background-image: linear-gradient(
     to right,
-    hsla(60, 2%, 36%, 1),
-    hsla(45, 8%, 72%, 1),
-    hsla(51, 23%, 88%, 1)
+
+    hsla(0, 0%, 40%, 0.9),
+    hsla(0, 0%, 40%, 0.95),
+    hsla(0, 0%, 40%, 1)
   );
 } */
 
@@ -113,21 +114,24 @@ html {
   background: hsl(209, 24%, 47%);
 }
 
-.bottom-right-radius {
-  border-bottom-right-radius: 90px;
-}
-
 .rectangle {
-  left: 80px;
-  right: 120px;
-  top: 96px;
-  bottom: 40px;
-  position: absolute;
+  margin: 0 auto;
+  width: calc(100% - 60px);
+  max-width: 100%;
+  position: relative;
+  border-top-left-radius: 50px;
+  border-bottom-right-radius: 50px;
+  background: linear-gradient(
+    to left,
+    hsla(0, 0%, 40%, 0.8),
+    hsla(0, 0%, 40%, 0.9),
+    hsla(0, 0%, 40%, 1)
+  );
 }
 
 .centered-heading {
-  padding-left: 140px; /* Adjust this value as needed */
-  padding-right: 140px; /* Adjust this value as needed */
+  padding-left: 130px; /* Adjust this value as needed */
+  padding-right: 130px; /* Adjust this value as needed */
 }
 
 .authorize-text {

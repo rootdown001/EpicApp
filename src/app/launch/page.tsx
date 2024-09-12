@@ -60,24 +60,24 @@ export default function Launch() {
   };
 
   return (
-    <div className="flex flex-col items-center self-center px-20  w-full rounded-none max-w-[1070px] max-md:px-5 max-md:pt-24 max-md:max-w-full">
-      <div className="bg-grad bottom-right-radius rectangle">
-        <h1 className=" text-center text-white text-[64px] font-normal leading-[70px] pt-16 centered-heading max-md:max-w-full ">
+    <div className="flex flex-col items-center self-center px-20  w-full rounded-none">
+      <div className="bg-[#ffffff]">
+        <h1 className=" text-center text-[#0B3864] text-[64px] font-normal leading-[70px] pt-20 centered-heading ">
           Hospice AI Chart Review and Medicare Coder
         </h1>
-        <h2 className=" mt-10 text-[34px] font-medium text-center text-white max-md:mt-10 max-md:max-w-full">
+        <h2 className=" mt-14 text-[34px] font-normal text-center text-[#0B3864]">
           Seamlessly Integrate Your EPIC Medical Records
         </h2>
-        <div className=" mt-24 max-w-full ">
-          <div className="flex gap-5 flex-row w-full">
+        <div className=" mt-20 w-full ">
+          <div className="flex flex-row rectangle">
             <div className="flex flex-col flex-[6]">
-              <p className="text-[22px] leading-6 font-medium pl-[140px] text-white  ">
+              <p className="text-[18px] py-8 leading-6 font-normal pl-[140px] text-white  ">
                 Click "Authorize" to link your provider account and streamline
                 the process of identifying hospice-eligible patients while
                 ensuring accurate Medicare coding and reimbursement.
               </p>
             </div>
-            <div className="flex flex-col flex-[3] items-end pr-32 z-50">
+            <div className="flex flex-col flex-[3] justify-center items-center mr-8">
               <AuthorizeButton onClick={handleAuthorizeClick} />
             </div>
           </div>
